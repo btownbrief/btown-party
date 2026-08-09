@@ -8,12 +8,9 @@
 //
 //   node scripts/smoke-two-heads.mjs
 //
-// ONE MOCK, clearly labeled: the shell's host console currently renders
-// only the FIRST mode in modes/manifest.js for round setup ("a mode picker
-// appears when a sibling lands" — js/host.js). Until that picker exists,
-// the HOST context alone gets a rerouted manifest.js with two-heads listed
-// first. Phones and the screen load the real manifest untouched. Delete
-// the reroute when the shell's mode picker lands.
+// The shell's mode picker landed, so this smoke drives it like a real
+// night: the host taps the Two Heads tab, then opens the round. (The old
+// host-only manifest reroute is gone.)
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -55,17 +52,6 @@ function startStatic() {
   });
 }
 
-const HOST_MANIFEST = `
-// smoke-only manifest: two-heads first so the pickerless host console
-// renders its round setup. See the header of smoke-two-heads.mjs.
-import * as roomKnows from './room-knows/mode.js';
-import * as twoHeads from './two-heads/mode.js';
-export const MODES = {
-  [twoHeads.slug]: twoHeads,
-  [roomKnows.slug]: roomKnows,
-};
-`;
-
 let failures = 0;
 const ok = (label) => console.log(`✓ ${label}`);
 const fail = (label, extra) => {
@@ -87,12 +73,8 @@ const api = `?api=${encodeURIComponent(shimUrl)}`;
 
 const browser = await chromium.launch();
 const pageErrors = [];
-async function newFace(path, { width, height }, { hostManifest = false } = {}) {
+async function newFace(path, { width, height }) {
   const ctx = await browser.newContext({ viewport: { width, height } });
-  if (hostManifest) {
-    await ctx.route('**/modes/manifest.js', (route) =>
-      route.fulfill({ contentType: 'text/javascript', body: HOST_MANIFEST }));
-  }
   const page = await ctx.newPage();
   page.on('pageerror', (e) => pageErrors.push(`${path}: ${e.message}`));
   await page.goto(`${baseUrl}/${path}`);
@@ -103,8 +85,8 @@ const LAPTOP = { width: 1440, height: 900 };
 const T = { timeout: 15000 };
 
 try {
-  /* ---- host creates tonight's event (manifest rerouted, see header) --- */
-  const host = await newFace(`host.html${api}`, PHONE, { hostManifest: true });
+  /* ---- host creates tonight's event ----------------------------------- */
+  const host = await newFace(`host.html${api}`, PHONE);
   await host.waitForSelector('#setupPanel:not(.hidden)', T);
   await host.fill('#eventTitle', 'Two Heads Smoke');
   await host.click('#hostCreate');
@@ -131,7 +113,10 @@ try {
   await screen.waitForSelector('#stage:not(.hidden)', T);
   ok('screen is up');
 
-  /* ---- host opens a Two Heads write round ------------------------------ */
+  /* ---- host picks Two Heads on the mode tabs, opens a write round ------ */
+  await host.waitForSelector('#mode-tab-two-heads', T);
+  await host.click('#mode-tab-two-heads');
+  ok('host picked Two Heads on the shell mode picker');
   await host.waitForSelector(`#mode-two-heads-prompt-th-001`, T);
   await host.click('#mode-two-heads-prompt-th-001');
   await host.waitForSelector('#roundLive:not(.hidden)', T);
