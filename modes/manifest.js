@@ -4,7 +4,9 @@
 // contract a mode module must satisfy.
 
 import * as roomKnows from './room-knows/mode.js';
+import * as roomRelay from './room-relay/mode.js';
 
 export const MODES = {
   [roomKnows.slug]: roomKnows,
+  [roomRelay.slug]: roomRelay,
 };
