@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "comment": "ROOM RELAY prompt deck. doodle = things to draw; phrase = things to write (someone else will draw them); headline = fake-local-headline starters. seedHeadlines are templates the logic fills from anonymous check-in tallies ({pct} {top} {q}) so the first relay always has material.",
+  "doodle": [
+    "a creemee fighting a snowstorm",
+    "Champ on a paddleboard",
+    "a maple tree that has had enough",
+    "a Church Street pigeon with big plans",
+    "the world's proudest snowplow",
+    "a cow reviewing a restaurant",
+    "mud season, as a monster",
+    "a kayak stuck in traffic",
+    "a very smug sugar shack",
+    "the lake at 6am",
+    "a bike with too many stickers",
+    "the last parking spot downtown",
+    "a raccoon running a farm stand",
+    "foliage tourists seeing one leaf",
+    "an inflatable flamingo in November",
+    "the ferry having a bad day"
+  ],
+  "phrase": [
+    "Invent a Vermont superstition",
+    "A rule every Burlington coffee shop secretly follows",
+    "The real reason the geese are leaving",
+    "Something you'd yell off the end of the fishing pier",
+    "A law that only applies on Church Street",
+    "What the mountains say about us when we leave",
+    "The secret ingredient in everything here",
+    "A warning sign the lake should have",
+    "Something overheard at the co-op",
+    "The one thing every Vermonter's car contains",
+    "What the first snow is actually for",
+    "A toast you'd give at a sugarhouse wedding"
+  ],
+  "headline": [
+    "BREAKING: local squirrel …",
+    "Church Street to be replaced by …",
+    "Scientists confirm the lake is …",
+    "Town meeting erupts over …",
+    "New state law requires every Vermonter to …",
+    "Creemee shortage blamed on …",
+    "Mysterious lights over the lake turn out to be …",
+    "Local band announces album made entirely of …",
+    "City unveils bold plan to …",
+    "Farmers market vendor caught …",
+    "Winter arrives early, brings …",
+    "Beloved pothole finally …"
+  ],
+  "seedHeadlines": [
+    "BREAKING: {pct}% of this room says {top}",
+    "POLL: \"{top}\" wins \"{q}\" in a landslide",
+    "ROOM DIVIDED: {top} takes it with just {pct}%",
+    "EXPERTS STUNNED as this room backs {top}",
+    "LOCAL ROOM votes {top} — {pct}% and proud"
+  ]
+}
