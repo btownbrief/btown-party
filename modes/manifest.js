@@ -4,7 +4,9 @@
 // contract a mode module must satisfy.
 
 import * as roomKnows from './room-knows/mode.js';
+import * as twoHeads from './two-heads/mode.js';
 
 export const MODES = {
   [roomKnows.slug]: roomKnows,
+  [twoHeads.slug]: twoHeads,
 };
