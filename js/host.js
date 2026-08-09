@@ -236,19 +236,31 @@ function wireRoundButtons() {
     poller.poke();
   });
   $('revealBtn').addEventListener('click', async () => {
-    const r = snap.round;
-    const mode = MODES[r.mode];
-    const approved = r.submissions
-      .filter((s) => s.status === 'approved')
-      .map((s) => ({ name: s.name, payload: s.payload }));
-    const results = mode.computeResults({
-      config: r.config, approved, checkinTallies: snap.checkinTallies,
-    });
-    await backend.rpc('party_start_reveal', {
-      p_event: session.eventId, p_host_key: hostKey(),
-      p_round: r.id, p_results: results,
-    });
-    poller.poke();
+    const btn = $('revealBtn');
+    btn.disabled = true;
+    try {
+      // Compute from a FRESH snapshot, not the last poll — an approve tap
+      // a second ago must be in the reveal, and the backend is the truth.
+      const fresh = await backend.rpc('party_host_get', {
+        p_event: session.eventId, p_host_key: hostKey(),
+      });
+      const r = fresh.round;
+      if (!r || r.status !== 'moderating') return;
+      const mode = MODES[r.mode];
+      const approved = r.submissions
+        .filter((s) => s.status === 'approved')
+        .map((s) => ({ name: s.name, payload: s.payload }));
+      const results = mode.computeResults({
+        config: r.config, approved, checkinTallies: fresh.checkinTallies,
+      });
+      await backend.rpc('party_start_reveal', {
+        p_event: session.eventId, p_host_key: hostKey(),
+        p_round: r.id, p_results: results,
+      });
+      poller.poke();
+    } finally {
+      btn.disabled = false;
+    }
   });
   $('scrapRoundBtn').addEventListener('click', function () {
     twoTap('scrap', this, 'really scrap it?', async () => {

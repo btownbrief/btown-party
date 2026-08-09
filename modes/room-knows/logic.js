@@ -57,18 +57,23 @@ export function computeResults({ config, tally, approved }) {
     const pickedWinner = winners.includes(g.pick);
     // Your percent guess is judged against the option YOU picked, so a
     // wrong pick can still earn accuracy points — porous, never punishing.
-    const error = emptyRoom ? null : Math.abs(g.pct - exact[g.pick]);
+    // Errors are compared in integer space (|pct·total − count·100|) so a
+    // 40%-on-a-third vs 60%-on-two-thirds dead heat really ties — float
+    // division would split it by a rounding hair.
+    const errScaled = emptyRoom ? null
+      : Math.abs(g.pct * total - counts[g.pick] * 100);
+    const error = emptyRoom ? null : errScaled / total;
     const score = emptyRoom ? 0
       : (pickedWinner ? SCORING.winnerPickPoints : 0)
         + Math.max(0, Math.round(SCORING.closenessMax - error));
-    return [{ name: s.name, pick: g.pick, pct: g.pct, pickedWinner, error, score }];
+    return [{ name: s.name, pick: g.pick, pct: g.pct, pickedWinner, error, errScaled, score }];
   });
 
   // "Closest reader of the room": smallest percent error, ties all called out.
   let closest = [];
   if (!emptyRoom && guesses.length) {
-    const best = Math.min(...guesses.map((g) => g.error));
-    closest = guesses.filter((g) => g.error === best).map((g) => g.name);
+    const best = Math.min(...guesses.map((g) => g.errScaled));
+    closest = guesses.filter((g) => g.errScaled === best).map((g) => g.name);
   }
 
   return {

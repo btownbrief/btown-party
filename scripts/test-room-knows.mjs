@@ -63,6 +63,19 @@ const r2 = computeResults({
 is(r2.guesses.map((g) => g.score), [195, 195, 80], 'symmetric misses score the same');
 is(r2.closest, ['A', 'B'], 'a closeness tie calls out both readers');
 
+// ---- cross-option closeness tie (the float trap) -----------------------
+// Room of 3 splits 1/2: option 0 is really 33.33…%, option 1 is 66.66…%.
+// A 40% guess on option 0 and a 60% guess on option 1 are BOTH exactly
+// 6⅔ points off — float division would break this tie by a rounding hair,
+// so errors are compared in integer space (|pct·total − count·100|).
+const rCross = computeResults({
+  config, tally: { counts: [1, 2, 0], total: 3 },
+  approved: [guess('Lo', 0, 40), guess('Hi', 1, 60)],
+});
+is(rCross.closest, ['Lo', 'Hi'], 'equal misses on different options tie for closest reader');
+is(rCross.guesses[0].score + 100, rCross.guesses[1].score,
+  'the winner pick is still worth exactly the 100-point bonus');
+
 // ---- winning-option tie ------------------------------------------------
 const rTie = computeResults({
   config, tally: { counts: [5, 5, 0], total: 10 },

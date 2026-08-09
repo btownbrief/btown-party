@@ -33,8 +33,17 @@ export function isDemo() {
 }
 
 function apiBase() {
-  const override = urlParams().get('api') || globalThis.BTOWN_PARTY_URL;
-  return String(override || SUPABASE_URL).replace(/\/+$/, '');
+  // The ?api= override exists for the local shim (tests, offline
+  // playtesting). It is honored ONLY when the page itself is served from
+  // loopback AND points at loopback — on the deployed site a crafted
+  // ?api= link could otherwise ship the host key or a device token to a
+  // stranger's server.
+  const loopback = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(globalThis.location?.hostname ?? '');
+  const override = loopback && (urlParams().get('api') || globalThis.BTOWN_PARTY_URL);
+  if (override && /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(String(override).replace(/\/+$/, ''))) {
+    return String(override).replace(/\/+$/, '');
+  }
+  return SUPABASE_URL;
 }
 
 async function networkRpc(fn, args) {

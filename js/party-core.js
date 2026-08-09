@@ -31,7 +31,10 @@ export const LIMITS = {
   resultsBytes: 32768,     // one round's computed reveal
   playersPerEvent: 200,
   roundsPerEvent: 50,
-  eventsTotal: 500,        // global budget, same spirit as the rooms cap
+  votesPerPlayerPerRound: 40,
+  eventsTotal: 500,        // global budgets, same spirit as the rooms cap:
+  submissionsTotal: 50000, // …bounding total stored bytes, not just events,
+  votesTotal: 50000,       // so a key-scraper can't grow the shared project
   eventTtlS: 24 * 3600,    // events self-expire within a day
 };
 
@@ -111,18 +114,22 @@ export function validateQuestions(questions) {
     if (!Array.isArray(q.options) || q.options.length < LIMITS.optionsMin
         || q.options.length > LIMITS.optionsMax) fail('bad_questions');
     for (const o of q.options) {
-      const t = String(o ?? '').trim();
-      if (!t || t.length > LIMITS.optionLen) fail('bad_questions');
+      if (typeof o !== 'string' || !o.trim() || o.length > LIMITS.optionLen) {
+        fail('bad_questions');
+      }
     }
   }
 }
 
-const findByCode = (db, code) =>
-  Object.values(db.events).find((e) => e.code === normalizeCode(code));
+const findByCode = (db, code, now) =>
+  Object.values(db.events).find((e) => e.code === normalizeCode(code)
+    && now - e.createdAt <= LIMITS.eventTtlS);
 
-function getEvent(db, eventId) {
+// Expiry is enforced on READ too: an event past its 24 hours is gone even
+// if nothing has triggered a sweep — matching the SQL's bp_event().
+function getEvent(db, eventId, now) {
   const e = db.events[eventId];
-  if (!e) fail('not_found');
+  if (!e || now - e.createdAt > LIMITS.eventTtlS) fail('not_found');
   return e;
 }
 
@@ -158,6 +165,11 @@ export function checkinTally(event, questionId) {
   return { questionId, counts, total };
 }
 
+const countSubmissions = (db) => Object.values(db.events).reduce(
+  (a, e) => a + e.rounds.reduce((b, r) => b + Object.keys(r.submissions).length, 0), 0);
+const countVotes = (db) => Object.values(db.events).reduce(
+  (a, e) => a + e.rounds.reduce((b, r) => b + Object.keys(r.votes).length, 0), 0);
+
 /* ------------------------------------------------------------------- ops */
 // Every op: (db, args, now) → { db, result }. Throws PartyError on refusal.
 
@@ -183,7 +195,7 @@ export function create_event(db, { hostKey, questions, title }, now) {
   }
   const made = makeCode(d);
   d = made.db;
-  if (findByCode(d, made.code)) fail('no_codes_left'); // vanishing odds; SQL retries
+  if (findByCode(d, made.code, now)) fail('no_codes_left'); // vanishing odds; SQL retries
   const id = `evt-${++d.seq}`;
   d.events[id] = {
     id,
@@ -206,7 +218,7 @@ export function join(db, { code, name, token }, now) {
   }
   if (!isValidCode(code)) fail('bad_code');
   let d = sweep(clone(db), now);
-  const e = findByCode(d, code);
+  const e = findByCode(d, code, now);
   if (!e) fail('not_found');
   if (e.status !== 'open') fail('event_closed');
   const existing = Object.values(e.players).find((p) => p.token === token);
@@ -237,10 +249,11 @@ const joinResult = (e, p) => ({
 
 export function checkin(db, { eventId, token, answers }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   if (e.status !== 'open') fail('event_closed');
   const p = requirePlayer(e, token);
-  if (!answers || typeof answers !== 'object' || Array.isArray(answers)) fail('bad_answers');
+  if (!answers || typeof answers !== 'object' || Array.isArray(answers)
+      || jsonBytes(answers) > 2048) fail('bad_answers');
   const cleaned = {};
   for (const [qid, v] of Object.entries(answers)) {
     const q = e.questions.find((x) => x.id === qid);
@@ -259,7 +272,7 @@ export function checkin(db, { eventId, token, answers }, now) {
  *  no other players' inputs, no results — the reveal belongs to the room. */
 export function player_get(db, { eventId, token }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   const p = requirePlayer(e, token);
   if (now - p.lastSeen > 15) p.lastSeen = now;
   const r = currentRound(e);
@@ -283,7 +296,7 @@ export function player_get(db, { eventId, token }, now) {
 
 export function open_round(db, { eventId, hostKey, mode, config }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   requireHost(e, hostKey);
   if (e.status !== 'open') fail('event_closed');
   if (currentRound(e)) fail('round_in_progress');
@@ -302,16 +315,22 @@ export function open_round(db, { eventId, hostKey, mode, config }, now) {
 
 export function submit(db, { eventId, token, roundId, payload }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   const p = requirePlayer(e, token);
   const r = currentRound(e);
   if (!r || r.id !== roundId) fail('round_closed');
   if (r.status !== 'collecting') fail('round_closed');
   if (payload == null || jsonBytes(payload) > LIMITS.payloadBytes) fail('bad_payload');
-  // Re-submitting replaces your own entry — and goes back to 'pending':
-  // edits never sneak past moderation on the back of an earlier approval.
+  // The budget gates NEW rows only — editing your own entry is always free.
+  if (!r.submissions[p.id] && countSubmissions(d) >= LIMITS.submissionsTotal) {
+    fail('party_over_capacity');
+  }
+  // Re-submitting replaces your own entry, resets it to 'pending', AND
+  // mints a FRESH id: a moderation verdict is pinned to the exact version
+  // the host looked at, so an edit racing the host's approve tap makes
+  // that approve miss (not_found) instead of blessing unseen content.
   r.submissions[p.id] = {
-    id: r.submissions[p.id]?.id ?? `sub-${++d.seq}`,
+    id: `sub-${++d.seq}`,
     playerId: p.id,
     name: p.name,
     payload: structuredClone(payload),
@@ -326,22 +345,29 @@ export function submit(db, { eventId, token, roundId, payload }, now) {
 /** Generic per-round vote (future modes; Room Knows doesn't use it). */
 export function vote(db, { eventId, token, roundId, target, value }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   const p = requirePlayer(e, token);
   const r = currentRound(e);
   if (!r || r.id !== roundId) fail('round_closed');
   if (!['collecting', 'moderating', 'revealing'].includes(r.status)) fail('round_closed');
-  const t = String(target ?? '').slice(0, 64);
-  if (!t) fail('bad_vote');
+  const t = String(target ?? '').trim();
+  if (!t || t.length > 64) fail('bad_vote');
   if (!Number.isInteger(value) || Math.abs(value) > 10) fail('bad_vote');
-  r.votes[`${p.id}:${t}`] = { playerId: p.id, target: t, value, at: now };
+  const mine = Object.values(r.votes).filter((v) => v.playerId === p.id).length;
+  if (!r.votes[`${p.id}:${t}`] && mine >= LIMITS.votesPerPlayerPerRound) {
+    fail('too_many_votes');
+  }
+  if (!r.votes[`${p.id}:${t}`] && countVotes(d) >= LIMITS.votesTotal) {
+    fail('party_over_capacity');
+  }
+  r.votes[`${p.id}:${t}`] = { playerId: p.id, target: t, value };
   e.updatedAt = now;
   return { db: d, result: { ok: true } };
 }
 
 export function close_round(db, { eventId, hostKey }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   requireHost(e, hostKey);
   const r = currentRound(e);
   if (!r || r.status !== 'collecting') fail('bad_phase');
@@ -352,7 +378,7 @@ export function close_round(db, { eventId, hostKey }, now) {
 
 export function moderate(db, { eventId, hostKey, submissionId, status }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   requireHost(e, hostKey);
   if (!SUBMISSION_STATUSES.includes(status) || status === 'pending') fail('bad_status');
   const r = currentRound(e);
@@ -368,7 +394,7 @@ export function moderate(db, { eventId, hostKey, submissionId, status }, now) {
  *  "approve the rest" (or "reject the rest") before a reveal. */
 export function moderate_all(db, { eventId, hostKey, roundId, status }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   requireHost(e, hostKey);
   if (!['approved', 'rejected', 'held'].includes(status)) fail('bad_status');
   const r = currentRound(e);
@@ -391,7 +417,7 @@ export function moderate_all(db, { eventId, hostKey, roundId, status }, now) {
  */
 export function start_reveal(db, { eventId, hostKey, roundId, results }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   requireHost(e, hostKey);
   const r = currentRound(e);
   if (!r || r.id !== roundId) fail('bad_phase');
@@ -409,7 +435,7 @@ export function start_reveal(db, { eventId, hostKey, roundId, results }, now) {
 
 export function reveal_step(db, { eventId, hostKey, roundId, step }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   requireHost(e, hostKey);
   const r = currentRound(e);
   if (!r || r.id !== roundId || r.status !== 'revealing') fail('bad_phase');
@@ -421,7 +447,7 @@ export function reveal_step(db, { eventId, hostKey, roundId, step }, now) {
 
 export function end_round(db, { eventId, hostKey }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   requireHost(e, hostKey);
   const r = currentRound(e);
   if (!r) fail('bad_phase');
@@ -433,18 +459,23 @@ export function end_round(db, { eventId, hostKey }, now) {
 
 export function remove_player(db, { eventId, hostKey, playerId }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   requireHost(e, hostKey);
   if (!e.players[playerId]) fail('not_found');
   delete e.players[playerId];
-  for (const r of e.rounds) delete r.submissions[playerId];
+  for (const r of e.rounds) {
+    delete r.submissions[playerId];
+    for (const k of Object.keys(r.votes)) {
+      if (r.votes[k].playerId === playerId) delete r.votes[k];
+    }
+  }
   e.updatedAt = now;
   return { db: d, result: { ok: true } };
 }
 
 export function close_event(db, { eventId, hostKey }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   requireHost(e, hostKey);
   e.status = 'closed';
   const r = currentRound(e);
@@ -456,7 +487,7 @@ export function close_event(db, { eventId, hostKey }, now) {
 /** The host poll: the whole picture, host's eyes only. */
 export function host_get(db, { eventId, hostKey }, now) {
   const d = clone(db);
-  const e = getEvent(d, eventId);
+  const e = getEvent(d, eventId, now);
   requireHost(e, hostKey);
   const r = currentRound(e);
   return {
@@ -486,7 +517,7 @@ export function host_get(db, { eventId, hostKey }, now) {
             id: s.id, name: s.name, payload: structuredClone(s.payload),
             status: s.status,
           })),
-        votes: Object.values(r.votes).map((v) => ({ ...v })),
+        votes: Object.values(r.votes).map((v) => ({ playerId: v.playerId, target: v.target, value: v.value })),
       } : null,
       roundsPlayed: e.rounds.filter((x) => x.status === 'done').length,
       doneResults: e.rounds
@@ -503,7 +534,7 @@ export function host_get(db, { eventId, hostKey }, now) {
  */
 export function screen_get(db, { code }, now) {
   const d = clone(db);
-  const e = findByCode(d, code);
+  const e = findByCode(d, code, now);
   if (!e) fail('not_found');
   const r = currentRound(e);
   return {

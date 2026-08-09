@@ -179,13 +179,30 @@ begin
 end;
 $$;
 
+-- Event by id, expiry enforced on READ: past its 24 hours an event is
+-- gone even if nothing has triggered a sweep yet.
+create or replace function public.bp_event(p_event uuid)
+returns public.party_events
+language plpgsql security definer set search_path = public as $$
+declare e public.party_events%rowtype;
+begin
+  select * into e from party_events
+  where id = p_event and created_at > now() - interval '24 hours';
+  if not found then
+    raise exception using message = 'not_found';
+  end if;
+  return e;
+end;
+$$;
+
 create or replace function public.bp_event_by_code(p_code text)
 returns public.party_events
 language plpgsql security definer set search_path = public as $$
 declare e public.party_events%rowtype;
 begin
   select * into e from party_events
-  where code = upper(btrim(coalesce(p_code, '')));
+  where code = upper(btrim(coalesce(p_code, '')))
+    and created_at > now() - interval '24 hours';
   if not found then
     raise exception using message = 'not_found';
   end if;
@@ -198,10 +215,7 @@ returns public.party_events
 language plpgsql security definer set search_path = public as $$
 declare e public.party_events%rowtype;
 begin
-  select * into e from party_events where id = p_event;
-  if not found then
-    raise exception using message = 'not_found';
-  end if;
+  e := public.bp_event(p_event);
   if e.host_key_hash <> public.bp_hash(p_host_key) then
     raise exception using message = 'not_host';
   end if;
@@ -229,6 +243,34 @@ create or replace function public.bp_live_round(p_event uuid)
 returns public.party_rounds
 language sql security definer set search_path = public as $$
   select * from party_rounds where event_id = p_event and status <> 'done';
+$$;
+
+-- Same, but row-locked: party_submit and the lifecycle transitions take
+-- this one, so a phone's submit can't slip into a round in the same
+-- moment the host closes or reveals it.
+create or replace function public.bp_live_round_locked(p_event uuid)
+returns public.party_rounds
+language sql security definer set search_path = public as $$
+  select * from party_rounds where event_id = p_event and status <> 'done'
+  for update;
+$$;
+
+-- Global storage budgets (same spirit as the events cap): submissions are
+-- the only rows with real weight (≤2 KB each), votes are confetti — both
+-- get a hard global ceiling so a key-scraper can't grow the shared
+-- project's storage no matter how many identities they rotate through.
+create or replace function public.bp_check_row_budget(p_table text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if p_table = 'submissions'
+     and (select count(*) from party_submissions) >= 50000 then
+    raise exception using message = 'party_over_capacity';
+  end if;
+  if p_table = 'votes'
+     and (select count(*) from party_votes) >= 50000 then
+    raise exception using message = 'party_over_capacity';
+  end if;
+end;
 $$;
 
 -- Anonymous per-option counts for one check-in question. Only aggregates
@@ -391,10 +433,7 @@ declare
   q jsonb;
   cleaned jsonb := '{}'::jsonb;
 begin
-  select * into e from party_events where id = p_event;
-  if not found then
-    raise exception using message = 'not_found';
-  end if;
+  e := public.bp_event(p_event);
   if e.status <> 'open' then
     raise exception using message = 'event_closed';
   end if;
@@ -437,10 +476,7 @@ declare
   r public.party_rounds%rowtype;
   v_now bigint := extract(epoch from now())::bigint;
 begin
-  select * into e from party_events where id = p_event;
-  if not found then
-    raise exception using message = 'not_found';
-  end if;
+  e := public.bp_event(p_event);
   p := public.bp_require_player(p_event, p_token);
   if v_now - p.last_seen > 15 then
     update party_players set last_seen = v_now where id = p.id;
@@ -469,18 +505,29 @@ declare
   p public.party_players%rowtype;
   r public.party_rounds%rowtype;
 begin
+  perform public.bp_event(p_event);
   p := public.bp_require_player(p_event, p_token);
-  r := public.bp_live_round(p_event);
+  r := public.bp_live_round_locked(p_event);
   if r.id is null or r.id <> p_round or r.status <> 'collecting' then
     raise exception using message = 'round_closed';
   end if;
   if p_payload is null or pg_column_size(p_payload) > 2048 then
     raise exception using message = 'bad_payload';
   end if;
+  -- The budget gates NEW rows only — editing your own entry is always free.
+  if not exists (select 1 from party_submissions
+                 where round_id = r.id and player_id = p.id) then
+    perform public.bp_check_row_budget('submissions');
+  end if;
+  -- Re-submitting replaces the entry, resets it to 'pending', AND mints a
+  -- FRESH id: approval is pinned to the exact version the host reviewed,
+  -- so an edit racing the host's approve tap makes that approve fail
+  -- (not_found) instead of blessing content the host never saw.
   insert into party_submissions (round_id, player_id, name, payload)
   values (r.id, p.id, p.name, p_payload)
   on conflict (round_id, player_id) do update
-    set payload = excluded.payload, name = excluded.name,
+    set id = extensions.gen_random_uuid(),
+        payload = excluded.payload, name = excluded.name,
         status = 'pending', created_at = now();
   update party_players set last_seen = extract(epoch from now())::bigint
   where id = p.id;
@@ -498,21 +545,28 @@ declare
   p public.party_players%rowtype;
   r public.party_rounds%rowtype;
 begin
+  perform public.bp_event(p_event);
   p := public.bp_require_player(p_event, p_token);
   r := public.bp_live_round(p_event);
   if r.id is null or r.id <> p_round or r.status = 'done' then
     raise exception using message = 'round_closed';
   end if;
-  if coalesce(btrim(p_target), '') = '' or length(p_target) > 64
+  if coalesce(btrim(p_target), '') = '' or length(btrim(p_target)) > 64
      or p_value is null or abs(p_value) > 10 then
     raise exception using message = 'bad_vote';
   end if;
-  if (select count(*) from party_votes
-      where round_id = r.id and player_id = p.id) >= 40 then
-    raise exception using message = 'too_many_votes';
+  -- Caps gate NEW rows only — changing an existing vote is always free.
+  if not exists (select 1 from party_votes
+                 where round_id = r.id and player_id = p.id
+                   and target = btrim(p_target)) then
+    if (select count(*) from party_votes
+        where round_id = r.id and player_id = p.id) >= 40 then
+      raise exception using message = 'too_many_votes';
+    end if;
+    perform public.bp_check_row_budget('votes');
   end if;
   insert into party_votes (round_id, player_id, target, value)
-  values (r.id, p.id, p_target, p_value)
+  values (r.id, p.id, btrim(p_target), p_value)
   on conflict (round_id, player_id, target) do update set value = excluded.value;
   update party_events set updated_at = now() where id = p_event;
   return jsonb_build_object('ok', true);
@@ -559,7 +613,7 @@ language plpgsql security definer set search_path = public as $$
 declare r public.party_rounds%rowtype;
 begin
   perform public.bp_require_host(p_event, p_host_key);
-  r := public.bp_live_round(p_event);
+  r := public.bp_live_round_locked(p_event);
   if r.id is null or r.status <> 'collecting' then
     raise exception using message = 'bad_phase';
   end if;
@@ -632,7 +686,7 @@ language plpgsql security definer set search_path = public as $$
 declare r public.party_rounds%rowtype;
 begin
   perform public.bp_require_host(p_event, p_host_key);
-  r := public.bp_live_round(p_event);
+  r := public.bp_live_round_locked(p_event);
   if r.id is null or r.id <> p_round
      or r.status not in ('collecting', 'moderating') then
     raise exception using message = 'bad_phase';
@@ -794,7 +848,10 @@ revoke all on function
   public.bp_check_questions(jsonb),
   public.bp_sweep(),
   public.bp_check_budget(),
+  public.bp_event(uuid),
   public.bp_event_by_code(text),
+  public.bp_live_round_locked(uuid),
+  public.bp_check_row_budget(text),
   public.bp_require_host(uuid, text),
   public.bp_require_player(uuid, text),
   public.bp_live_round(uuid),
