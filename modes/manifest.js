@@ -5,8 +5,10 @@
 
 import * as roomKnows from './room-knows/mode.js';
 import * as tallTales from './tall-tales/mode.js';
+import * as flatlander from './flatlander/mode.js';
 
 export const MODES = {
   [roomKnows.slug]: roomKnows,
   [tallTales.slug]: tallTales,
+  [flatlander.slug]: flatlander,
 };
