@@ -9,7 +9,7 @@
       "sourceUrl": "https://www.sevendaysvt.com/news/viva-la-bernie-sanderista-revolution-turns-30-2179221/",
       "sourceTitle": "Seven Days: Viva La Bernie! Sanderista Revolution Turns 30",
       "sourceQuote": "Sanders was elected mayor of Burlington by an eventual 10-vote margin in a three-way race against Democrat Gordon Paquette.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-002",
@@ -19,11 +19,11 @@
       "sourceUrl": "https://www.sevendaysvt.com/OffMessage/archives/2014/09/17/bernie-sanders-recorded-a-folk-album-no-punchline-required",
       "sourceTitle": "Seven Days: Bernie Sanders Recorded a Folk Album. No Punchline Required",
       "sourceQuote": "In 1987, while serving as Burlington's mayor, Sanders recorded an album of folk classics for the defunct BurlingTown Recordings label.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-003",
-      "setup": "Since 1988, Burlington's official sister city has been ___.",
+      "setup": "From 1988 until 2022, Burlington's official sister city in Russia was ___.",
       "answer": "Yaroslavl, Russia",
       "category": "civic-history",
       "sourceUrl": "https://vtdigger.org/2022/03/04/burlington-suspends-relationship-with-its-russian-sister-city/",
@@ -39,7 +39,7 @@
       "sourceUrl": "https://vtdigger.org/2022/04/24/the-winooski-dome-how-this-mill-town-was-almost-sealed-in-a-bubble/",
       "sourceTitle": "VTDigger: The Winooski Dome: How this mill town was almost sealed in a bubble",
       "sourceQuote": "Winooski's ingenious city planners applied for a $55,000 federal grant to study the possibility of constructing a dome over the city.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-005",
@@ -49,7 +49,7 @@
       "sourceUrl": "https://vermonthistoryexplorer.org/client_media/files/GreenMountaineer/vermontsveryown.pdf",
       "sourceTitle": "Vermont Historical Society (Green Mountaineer): Vermont's Very Own Monster",
       "sourceQuote": "the Vermont House of Representatives passed a resolution in April of 1982 which states that Champ should be protected from willful acts resulting in death, injury, or harassment.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-006",
@@ -59,11 +59,11 @@
       "sourceUrl": "https://vermonthistoryexplorer.org/client_media/files/GreenMountaineer/vermontsveryown.pdf",
       "sourceTitle": "Vermont Historical Society (Green Mountaineer): Vermont's Very Own Monster",
       "sourceQuote": "Despite frequent Champ spottings like these in the 1800s no one claimed the $50,000 that circus promoter P.T. Barnum offered as a reward for the creature's capture.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-007",
-      "setup": "The most famous photo of Champ was snapped in July 1977 by a vacationing Connecticut woman named ___.",
+      "setup": "A widely publicized 1977 photo of Champ was snapped by a Connecticut woman named ___.",
       "answer": "Sandra Mansi",
       "category": "champ-lore",
       "sourceUrl": "https://vermonthistoryexplorer.org/client_media/files/GreenMountaineer/vermontsveryown.pdf",
@@ -79,7 +79,7 @@
       "sourceUrl": "https://vermonthistoryexplorer.org/client_media/files/GreenMountaineer/vermontsveryown.pdf",
       "sourceTitle": "Vermont Historical Society (Green Mountaineer): Vermont Trivia",
       "sourceQuote": "No, the Battle of Bennington was not fought in Bennington. No, it was not even fought in the state of Vermont. It was fought in Wallomsack, New York, just over the border from Vermont and only a few miles from Bennington.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-009",
@@ -89,7 +89,7 @@
       "sourceUrl": "https://www.sevendaysvt.com/arts-culture/whats-with-the-file-cabinet-tower-on-flynn-avenue-3064266/",
       "sourceTitle": "Seven Days: WTF: What's With the File Cabinet Tower on Burlington's Flynn Avenue?",
       "sourceQuote": "an installation created by Burlington architect Bren Alvarez ... [38 drawers,] one for each year from 1965 to 2002 ... titled 'File Under So. Co., Waiting for…'",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-010",
@@ -99,7 +99,7 @@
       "sourceUrl": "https://www.burlingtoncityarts.org/winged-monkeys",
       "sourceTitle": "Burlington City Arts: Winged Monkeys",
       "sourceQuote": "The Winged Monkeys of the clock tower were originally made in 1975 for a waterbed store in downtown Burlington called 'The Emerald City of Oz.'",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-011",
@@ -109,7 +109,7 @@
       "sourceUrl": "https://phish.com/tours/dates/fri-1983-12-02-harrismillis-cafeteria-uvm/",
       "sourceTitle": "Phish.com official tour archive: Fri 1983-12-02, Harris/Millis Cafeteria, UVM",
       "sourceQuote": "This was Phish's (Trey Anastasio, Jon Fishman, Mike Gordon and Jeff Holdsworth) 1st show ... A hockey stick was used as a microphone stand.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-012",
@@ -119,7 +119,7 @@
       "sourceUrl": "https://www.burlingtonelectric.com/firstlight-power-purchase/",
       "sourceTitle": "Burlington Electric Department (city utility) press release",
       "sourceQuote": "In 2014, Burlington became the first city in the nation to source 100% of its power from renewable generation",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-013",
@@ -129,7 +129,7 @@
       "sourceUrl": "https://www.sevendaysvt.com/music/nectars-burlington-landmark-at-40-3030112/",
       "sourceTitle": "Seven Days: Nectar's, a Burlington Landmark, at 40",
       "sourceQuote": "featured on their 1992 major-label debut A Picture of Nectar, the album that bore Rorris' face on its cover.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-014",
@@ -139,7 +139,7 @@
       "sourceUrl": "https://www.uvm.edu/seagrant/2025/03/17/why-isnt-lake-champlain-a-great-lake/",
       "sourceTitle": "UVM Lake Champlain Sea Grant: Why isn't Lake Champlain a Great Lake?",
       "sourceQuote": "On March 6, 1998, President Clinton signed a bill drafted by U.S. Senator Patrick Leahy of Vermont... The bill included a single line declaring Lake Champlain a Great Lake... Only 18 days after the bill passed, Lake Champlain's Great Lake status was rescinded.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-015",
@@ -149,7 +149,7 @@
       "sourceUrl": "https://www.wcax.com/2026/05/05/this-day-history-5-ice-cream-class-sparks-ben-jerrys-empire/",
       "sourceTitle": "WCAX: This Day in History: A $5 ice cream class sparks the Ben & Jerry's empire",
       "sourceQuote": "The two friends had taken a $5 ice cream-making course at Penn State, then decided to turn what they learned into a business. ... On May 5, 1978, Ben Cohen and Jerry Greenfield launched the very first Ben & Jerry's ice cream shop in a converted gas station in downtown Burlington.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-016",
@@ -159,7 +159,7 @@
       "sourceUrl": "https://vtdigger.org/2025/09/14/ticonderoga-celebrates-70-years-on-land/",
       "sourceTitle": "VTDigger: Ticonderoga celebrates 70 years on land",
       "sourceQuote": "It took a little over two months to move the boat, which had been chugging around Lake Champlain since it was built in 1906 at the Shelburne shipyard. It never moved more than 250 feet in a day.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-017",
@@ -169,11 +169,11 @@
       "sourceUrl": "https://vtdigger.org/2018/04/29/burlington-born-john-dewey-education-reformer/",
       "sourceTitle": "VTDigger: Then Again: Burlington-born John Dewey was education reformer, and more",
       "sourceQuote": "John Dewey's ashes are buried beside Ira Allen Chapel at UVM, where he earned his undergraduate degree.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-018",
-      "setup": "Resting on the bottom of Burlington Bay is the only archaeologically studied American ferry that was powered by ___.",
+      "setup": "Resting on the bottom of Burlington Bay is the only archaeologically studied turntable \"team-boat\" ferry — a vessel powered by ___.",
       "answer": "horses (a turntable \"team-boat\")",
       "category": "lake-nature",
       "sourceUrl": "https://www.lcmm.org/archaeology/vermont-underwater-historic-preserves/horse-ferry/",
@@ -189,11 +189,11 @@
       "sourceUrl": "https://catalogue.uvm.edu/undergraduate/aboutuniv/",
       "sourceTitle": "UVM Catalogue: About the University",
       "sourceQuote": "This popular abbreviation is derived from the Latin Universitas Viridis Montis, University of the Green Mountains.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-020",
-      "setup": "For about 75 years, the Winooski River was officially known as the ___ River.",
+      "setup": "For about 75 years, the Winooski River was commonly known as the ___ River.",
       "answer": "Onion (Winooski is Abenaki for the wild onions on its banks)",
       "category": "history",
       "sourceUrl": "https://www.sevendaysvt.com/news/whats-in-a-name-the-origins-of-the-winooski-river-2265829/",
@@ -209,7 +209,7 @@
       "sourceUrl": "https://vtdigger.org/2021/07/11/then-again-vermonts-billboard-ban-followed-a-winding-road-to-passage/",
       "sourceTitle": "VTDigger: Then Again: Vermont's billboard ban followed a winding road to passage",
       "sourceQuote": "Vermont became the first state in the continental United States to ban billboards. ... Billboard companies and advertisers labeled efforts to ban the signs 'communist.'",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-022",
@@ -219,7 +219,7 @@
       "sourceUrl": "https://historicsites.vermont.gov/ethan-allen",
       "sourceTitle": "Vermont State Historic Sites: Ethan Allen Monument",
       "sourceQuote": "buried in this cemetery are the parents of First Lady Grace Goodhue Coolidge, who was born in Burlington and later married President Calvin Coolidge in her parent's home at 312 Maple Street.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-023",
@@ -229,7 +229,7 @@
       "sourceUrl": "https://www.weather.gov/media/btv/climo/extremes/extremetemps.pdf",
       "sourceTitle": "National Weather Service Burlington: Burlington, Vermont Temperature Extremes",
       "sourceQuote": "Highest 101 degrees on August 11th, 1944",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-024",
@@ -239,7 +239,7 @@
       "sourceUrl": "https://vermonthistory.org/first-ski-tow-in-the-u-s",
       "sourceTitle": "Vermont Historical Society: First Ski Tow in the U.S.",
       "sourceQuote": "In 1935, they started running the first rope tow in the United States.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-025",
@@ -249,7 +249,7 @@
       "sourceUrl": "http://www.leg.state.vt.us/docs/2000/acts/ACT015.HTM",
       "sourceTitle": "Vermont Acts of the 1999-2000 Legislature, No. 15 (official archive)",
       "sourceQuote": "Sec. 2. SERVING APPLE PIE — When serving apple pie in Vermont, a \"good faith\" effort shall be made to meet one or more of the following conditions: (a) with a glass of cold milk, (b) with a slice of cheddar cheese weighing a minimum of 1/2 ounce, (c) with a large scoop of vanilla ice cream.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-026",
@@ -259,7 +259,7 @@
       "sourceUrl": "https://housefoods-group.com/products/en/vmt/",
       "sourceTitle": "House Foods Group: Vermont Curry (official product site)",
       "sourceQuote": "Vermont Curry is the number-one selling brand of Japanese curry roux. ... The origin of 'Vermont' in Vermont Curry dates back to a book entitled 'Folk Medicine: A Vermont Doctor's Guide to Good Health.'",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-027",
@@ -269,7 +269,7 @@
       "sourceUrl": "https://vermonthistory.org/snowflake-bentley",
       "sourceTitle": "Vermont Historical Society: Snowflake Bentley",
       "sourceQuote": "Wilson Alwyn Bentley otherwise known as Snowflake Bentley of Jericho, Vermont had a fascination with nature and meteorology. His captivation with snowflakes, ultimately, led him to be the first individual to capture a picture of a snowflake in 1885.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-028",
@@ -279,7 +279,7 @@
       "sourceUrl": "https://www.uvm.edu/ccp/naturalhistory/charlotte-whale",
       "sourceTitle": "UVM Natural History Collections: The Charlotte Whale",
       "sourceQuote": "The whale skeleton was originally unearthed near Charlotte, Vermont in 1849 by railroad workers during construction of the first railroad between Rutland and Burlington. ... The whale was declared the official State Fossil in 1993, and the bill was signed into law by Governor Howard Dean.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-029",
@@ -289,7 +289,7 @@
       "sourceUrl": "https://www.lakechamplaincommittee.org/learn/lake-look/lake-champlains-ancient-chazy-fossil-reef",
       "sourceTitle": "Lake Champlain Committee: Lake Champlain's Ancient Chazy Fossil Reef",
       "sourceQuote": "the Chazy Reef is the oldest known reef on Earth built by a community of different organisms ... About 480 million years ago... an expansive tropical sea teemed with life.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-030",
@@ -299,7 +299,7 @@
       "sourceUrl": "https://www.sevendaysvt.com/arts-culture/plymouth-notch-marks-the-centennial-of-calvin-coolidges-presidential-inauguration-38743434/",
       "sourceTitle": "Seven Days: Plymouth Notch Marks the Centennial of Calvin Coolidge's Presidential Inauguration",
       "sourceQuote": "By the light of a kerosene lamp, with his late mother's Bible nearby, Coolidge raised his right hand and swore to preserve, protect and defend the Constitution. (Article: his father, Col. John Coolidge, a notary public, administered the oath at 2:47 a.m. on August 3, 1923.)",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-031",
@@ -309,7 +309,7 @@
       "sourceUrl": "https://legislature.vermont.gov/statutes/fullchapter/01/011",
       "sourceTitle": "Vermont Statutes Online, 1 V.S.A. § 503",
       "sourceQuote": "§ 503. State Beverage — The State Beverage shall be milk. (Added 1983, No. 22, § 1, eff. April 22, 1983.)",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-032",
@@ -319,7 +319,7 @@
       "sourceUrl": "https://legislature.vermont.gov/statutes/fullchapter/01/011",
       "sourceTitle": "Vermont Statutes Online, 1 V.S.A. § 500",
       "sourceQuote": "§ 500. State Animal — The State Animal shall be the Morgan horse. (1961, No. 42, § 1, eff. March 23, 1961.)",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-033",
@@ -329,7 +329,7 @@
       "sourceUrl": "https://legislature.vermont.gov/statutes/fullchapter/01/011",
       "sourceTitle": "Vermont Statutes Online, 1 V.S.A. § 504",
       "sourceQuote": "§ 504. State Soil — The State Soil shall be the Tunbridge soil series. (Added 1985, No. 9, § 1, eff. Mar. 27, 1985.)",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-034",
@@ -339,7 +339,7 @@
       "sourceUrl": "https://www.sevendaysvt.com/music/with-a-run-of-concerts-at-trapp-family-lodge-the-sound-of-music-comes-home-41179513/",
       "sourceTitle": "Seven Days: With a Run of Concerts at Trapp Family Lodge, 'The Sound of Music' Comes Home",
       "sourceQuote": "They bought the view — and the house partially collapsed during a blizzard the following spring. (Also: 'the von Trapp family settled in 1942 and where descendants still operate a sprawling hospitality business.')",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-035",
@@ -349,7 +349,7 @@
       "sourceUrl": "https://vermonthistory.org/harmons-mint",
       "sourceTitle": "Vermont Historical Society: This Place in History: Harmon's Mint",
       "sourceQuote": "Vermont's only official mint was located in Rupert, VT. Started by Reuben Harmon, Jr. it ran from 1785 to 1788, producing just two copper coin designs for the then Republic of Vermont.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-036",
@@ -359,7 +359,7 @@
       "sourceUrl": "https://churchstmarketplace.com/history",
       "sourceTitle": "Church Street Marketplace: History",
       "sourceQuote": "In 1962, architecture student Bill Truex experienced the transformation of Strøget, Copenhagen's main shopping center, that went from a 'traffic-snarled nightmare' to a successful pedestrian mall. ... The Church Street Marketplace officially opened as we know it today on September 15, 1981",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-037",
@@ -369,7 +369,7 @@
       "sourceUrl": "https://vtdigger.org/2021/09/19/then-again-vermont-aids-the-allies-in-the-run-up-to-world-war-ii/",
       "sourceTitle": "VTDigger: Then Again: Vermont aids the Allies in the run-up to World War II",
       "sourceQuote": "Eighty years ago, in September 1941, the Vermont Legislature declared that the state was already in 'armed conflict' with Germany.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-038",
@@ -379,11 +379,11 @@
       "sourceUrl": "https://vermonthistory.org/last-catamount-in-vermont",
       "sourceTitle": "Vermont Historical Society: Last Catamount in Vermont",
       "sourceQuote": "The last known catamount in Vermont was killed in 1881.",
-      "needsReview": true
+      "needsReview": false
     },
     {
       "id": "tt-039",
-      "setup": "At Lone Rock Point in Burlington, geologists from around the world come to see rock layers that are famously ___.",
+      "setup": "At Lone Rock Point in Burlington, the exposed rock layers are famously ___.",
       "answer": "stacked in the wrong order — older rock sitting on top of younger rock",
       "category": "lake-nature",
       "sourceUrl": "https://dec.vermont.gov/geological-survey/vermont-geology/CHT",
@@ -399,7 +399,7 @@
       "sourceUrl": "https://www.sevendaysvt.com/guides/figure-it-out-summing-up-vermont-by-the-numbers-3603921/",
       "sourceTitle": "Seven Days: Figure It Out: Summing Up Vermont by the Numbers",
       "sourceQuote": "Montpelier was estimated at only 7,592, making it the smallest state capital in the country — and the only one without a McDonald's.",
-      "needsReview": true
+      "needsReview": false
     }
   ]
 }

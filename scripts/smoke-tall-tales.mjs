@@ -321,7 +321,11 @@ try {
 
   /* ---- hostSetup, direct: the curation gate in a real DOM ---------------- */
   const setupPage = await newFace(`index.html${api}`, PHONE);
-  const gate = await setupPage.evaluate(async () => {
+  // Expectations derive from the shipped deck: only !needsReview facts may
+  // appear in the default picker, whatever their current count is.
+  const reviewedCount = deck.facts.filter((f) => !f.needsReview).length;
+  const unrevId = deck.facts.find((f) => f.needsReview)?.id ?? null;
+  const gate = await setupPage.evaluate(async (unrevId) => {
     const mode = await import('/modes/tall-tales/mode.js');
     const render = async () => {
       const mount = document.createElement('div');
@@ -335,28 +339,33 @@ try {
     const live = await render();
     const liveResult = {
       picks: live.mount.querySelectorAll('[id^="mode-tall-tales-pick-"]').length,
+      unreviewedShown: unrevId ? !!live.mount.querySelector(`#mode-tall-tales-pick-${unrevId}`) : false,
       toggle: !!live.mount.querySelector('#mode-tall-tales-show-unreviewed'),
       hint: live.mount.textContent,
     };
-    // A DEMO page: the toggle exists, brands everything UNVERIFIED.
+    // A DEMO page: the toggle exists, brands unreviewed facts UNVERIFIED.
     history.replaceState(null, '', '?demo=1');
     const demo = await render();
     demo.mount.querySelector('#mode-tall-tales-show-unreviewed').click();
     const after = demo.mount.querySelectorAll('[id^="mode-tall-tales-pick-"]').length;
-    const metaText = demo.mount.querySelector('[id^="mode-tall-tales-pick-"] .qp-meta').textContent;
+    const metaText = unrevId
+      ? demo.mount.querySelector(`#mode-tall-tales-pick-${unrevId} .qp-meta`).textContent
+      : 'UNVERIFIED';
     demo.mount.querySelector('#mode-tall-tales-pick-tt-001').click();
     await new Promise((r) => setTimeout(r, 50));
     history.replaceState(null, '', location.pathname);
     return { liveResult, after, metaText, opened: demo.opened };
-  });
-  if (gate.liveResult.picks === 0 && gate.liveResult.hint.includes('No facts have passed review yet')) {
-    ok('hostSetup (live): with 0 reviewed facts the default picker is EMPTY — the curation gate holds');
-  } else fail('hostSetup (live): default picker hides unreviewed facts', `showed ${gate.liveResult.picks}`);
+  }, unrevId);
+  const gateHolds = gate.liveResult.picks === reviewedCount && !gate.liveResult.unreviewedShown
+    && (reviewedCount > 0 || gate.liveResult.hint.includes('No facts have passed review yet'));
+  if (gateHolds) {
+    ok(`hostSetup (live): default picker shows exactly the ${reviewedCount} reviewed facts, no unreviewed — the curation gate holds`);
+  } else fail('hostSetup (live): default picker hides unreviewed facts', `showed ${gate.liveResult.picks} of ${reviewedCount} reviewed; unreviewed visible: ${gate.liveResult.unreviewedShown}`);
   if (gate.liveResult.toggle === false) {
     ok('hostSetup (live): the unreviewed toggle does not even exist off ?demo=1');
   } else fail('hostSetup (live): the unreviewed toggle is absent on live pages');
   if (gate.after === deck.facts.length && gate.metaText.includes('UNVERIFIED')) {
-    ok('hostSetup (demo): the testing toggle shows all facts, each branded UNVERIFIED');
+    ok('hostSetup (demo): the testing toggle shows all facts, unreviewed ones branded UNVERIFIED');
   } else fail('hostSetup (demo): testing toggle brands unreviewed facts', gate.metaText);
   const cfg = gate.opened[0];
   if (cfg?.phase === 'lies' && cfg.fact?.id === 'tt-001' && !('answer' in cfg.fact) && !('source' in cfg.fact)) {
