@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "questions": [
+    {
+      "id": "rk-001",
+      "text": "Your creemee order:",
+      "options": ["Maple", "Chocolate-vanilla twist", "Black raspberry"],
+      "tags": ["food", "burlington", "classic"]
+    },
+    {
+      "id": "rk-002",
+      "text": "Which one is worse?",
+      "options": ["Mud season", "Stick season"],
+      "tags": ["seasons", "vermont"]
+    },
+    {
+      "id": "rk-003",
+      "text": "Church Street on a summer Saturday:",
+      "options": ["Love the crowd", "I'll come back Tuesday morning"],
+      "tags": ["burlington", "temperament"]
+    },
+    {
+      "id": "rk-004",
+      "text": "The lake on a hot day — where are you?",
+      "options": ["In the water", "On a towel", "At a table with a view of the water"],
+      "tags": ["burlington", "summer", "temperament"]
+    },
+    {
+      "id": "rk-005",
+      "text": "First real snowfall of the year:",
+      "options": ["Out in it by nine", "Watching it from the window with something warm"],
+      "tags": ["winter", "temperament"]
+    },
+    {
+      "id": "rk-006",
+      "text": "Your coffee order:",
+      "options": ["Black", "Basically a milkshake", "Tea, actually"],
+      "tags": ["food", "classic"]
+    },
+    {
+      "id": "rk-007",
+      "text": "Driving up the hill in January:",
+      "options": ["I drive in anything", "One flake and I'm staying home"],
+      "tags": ["winter", "vermont"]
+    },
+    {
+      "id": "rk-008",
+      "text": "The farmers market:",
+      "options": ["Every week, tote in hand", "A couple times a summer, mostly for the samples"],
+      "tags": ["burlington", "food"]
+    },
+    {
+      "id": "rk-009",
+      "text": "A free Saturday in October:",
+      "options": ["Up a mountain", "At a game or on the couch", "Errands, gloriously alone"],
+      "tags": ["fall", "temperament"]
+    },
+    {
+      "id": "rk-010",
+      "text": "Cider doughnuts:",
+      "options": ["Only warm from the bag", "Any doughnut is a good doughnut"],
+      "tags": ["food", "fall", "vermont"]
+    },
+    {
+      "id": "rk-011",
+      "text": "Camel's Hump or Mansfield?",
+      "options": ["Camel's Hump", "Mansfield", "The view from the parking lot"],
+      "tags": ["vermont", "outdoors"]
+    },
+    {
+      "id": "rk-012",
+      "text": "Burlington to Middlebury — which way do you go?",
+      "options": ["Route 7, windows down", "The interstate, I have places to be"],
+      "tags": ["vermont", "temperament"]
+    }
+  ]
+}

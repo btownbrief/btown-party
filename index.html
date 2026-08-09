@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#221a14">
+<title>BTOWN PARTY — Join the room</title>
+<meta name="description" content="The digital layer under a live Btown mixer: scan, join with a first name, and watch the room — not your phone. A Btown Games production from the BTown Brief.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="BTOWN PARTY — Join the room">
+<meta property="og:description" content="Scan the code, join with a first name, and watch the room light up.">
+<meta property="og:url" content="https://play.btownbrief.com/btown-party/">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="face-phone">
+<div class="page">
+  <div class="brand"><span class="b-party">BTOWN PARTY</span><span class="b-sub">a Btown Games production</span></div>
+  <div id="demoBanner" class="demo-banner hidden">Demo night — nothing here is real. Add ?demo=1 on the host &amp; screen pages too.</div>
+
+  <!-- join -->
+  <div id="joinPanel" class="card">
+    <h1>Join the room</h1>
+    <p class="dim">First name only. No account, nothing to install.</p>
+    <div style="margin-top:14px">
+      <input id="joinName" type="text" maxlength="24" placeholder="Your first name" autocomplete="given-name">
+    </div>
+    <div style="margin-top:10px">
+      <input id="joinCode" type="text" class="code-input" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters">
+    </div>
+    <div id="joinError" class="error-line"></div>
+    <button id="joinGo" class="big-btn">I'm here</button>
+  </div>
+
+  <!-- check-in -->
+  <div id="checkinPanel" class="card hidden">
+    <h1 id="checkinHello">Quick check-in</h1>
+    <p class="dim">Three taps — your answers stay private until the reveals.</p>
+    <div class="progress-dots" id="checkinDots"></div>
+    <div id="checkinBody"></div>
+    <button id="checkinSkip" class="chip-btn" style="margin-top:14px">Skip for now</button>
+  </div>
+
+  <!-- idle -->
+  <div id="idlePanel" class="hidden">
+    <div class="idle-hero">
+      <span class="lantern">🏮</span>
+      <h1 id="idleTitle">You're in.</h1>
+      <p class="dim" id="idleLine">Watch the room, not your phone — it'll buzz you when there's something to do.</p>
+    </div>
+  </div>
+
+  <!-- collect (mode UI mounts here) -->
+  <div id="collectPanel" class="card hidden">
+    <div id="collectMount"></div>
+  </div>
+
+  <!-- submitted / eyes up -->
+  <div id="lockedPanel" class="hidden">
+    <div class="idle-hero">
+      <span class="lantern">✅</span>
+      <h1>Got it.</h1>
+      <p class="dim">Eyes up — the reveal happens in the room.</p>
+    </div>
+  </div>
+
+  <!-- event over -->
+  <div id="overPanel" class="hidden">
+    <div class="idle-hero">
+      <span class="lantern">🌙</span>
+      <h1>That's the night.</h1>
+      <p class="dim">Thanks for playing. Say goodnight to somebody new.</p>
+    </div>
+  </div>
+
+  <!-- party mode not switched on / errors -->
+  <div id="offlinePanel" class="card hidden">
+    <h1>Party mode isn't switched on yet</h1>
+    <p class="dim" id="offlineLine">The host hasn't flipped the switch on the backend. Tonight still works the old-fashioned way — talk to people.</p>
+  </div>
+
+  <footer class="footer">
+    A Btown Games production · <a href="https://www.btownbrief.com" target="_blank" rel="noopener">Read the BTown Brief →</a>
+  </footer>
+</div>
+<script type="module" src="js/attendee.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#221a14">
+<title>BTOWN PARTY — Screen</title>
+<meta name="description" content="The big-screen face of a Btown Party night: the join QR, the drumroll, the reveal.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="face-screen">
+
+<!-- code entry (one time per venue laptop) -->
+<div id="codePanel" class="page hidden">
+  <div class="brand"><span class="b-party">BTOWN PARTY</span><span class="b-sub">screen view</span></div>
+  <div class="card">
+    <h1>Point me at tonight's event</h1>
+    <p class="dim">The 4-letter code is on the host console.</p>
+    <div style="margin-top:12px">
+      <input id="screenCodeInput" type="text" class="code-input" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters">
+    </div>
+    <div id="screenError" class="error-line"></div>
+    <button id="screenGo" class="big-btn">Put it on the big screen</button>
+  </div>
+</div>
+
+<!-- the stage -->
+<div id="stage" class="hidden">
+  <div class="stage-inner" id="stageInner"></div>
+</div>
+
+<div id="joinCorner" class="hidden">
+  <div id="qrMount"></div>
+  <div class="jc-code" id="cornerCode"></div>
+  <div class="jc-hint">scan to join</div>
+</div>
+
+<div id="offlineScreen" class="page hidden">
+  <div class="card" style="margin-top:20vh">
+    <h1>Party mode isn't switched on yet</h1>
+    <p class="dim">One-time setup on the host side — see PARTY-SETUP.md. Or rehearse with <a href="screen.html?demo=1" style="color:var(--amber)">the demo night</a>.</p>
+  </div>
+</div>
+
+<script type="module" src="js/screen.js"></script>
+</body>
+</html>

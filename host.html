@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#221a14">
+<title>BTOWN PARTY — Host console</title>
+<meta name="description" content="Run the mixer from your phone: roster, rounds, approvals, and the staged reveal.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="face-host">
+<div class="page">
+  <div class="brand"><span class="b-party">BTOWN PARTY</span><span class="b-sub">host console</span></div>
+  <div id="demoBanner" class="demo-banner hidden">Demo night — a fake crowd of 12 is already in the room.</div>
+
+  <!-- create tonight's event -->
+  <div id="setupPanel" class="card hidden">
+    <h1>Tonight's event</h1>
+    <p class="dim">Pick the 3 check-in questions. Attendees answer them privately as they join; every round points back at one.</p>
+    <div style="margin-top:12px">
+      <input id="eventTitle" type="text" maxlength="80" placeholder="Event name (optional — e.g. Coffee Mixer)">
+    </div>
+    <div id="questionPicker" style="margin-top:8px"></div>
+    <div id="setupError" class="error-line"></div>
+    <button id="hostCreate" class="big-btn">Start tonight's event</button>
+  </div>
+
+  <!-- running -->
+  <div id="runPanel" class="hidden">
+    <div class="card">
+      <div class="host-head">
+        <span class="host-code" id="hostCode">····</span>
+        <span class="host-stat" id="hostCount">0 in the room</span>
+        <button id="shareBtn" class="chip-btn">📲 invite link</button>
+      </div>
+      <p class="dim small">Screen page: open <span id="screenHint"></span> on the laptop — the join QR lives there.</p>
+    </div>
+
+    <div class="card">
+      <h2>Round</h2>
+      <div id="roundSetupMount" class="hidden"></div>
+      <div id="roundLive" class="hidden">
+        <p id="roundStatus" class="dim" style="margin:6px 0 4px"></p>
+        <div id="modQueue"></div>
+        <div class="host-actions">
+          <button id="approveAllBtn" class="chip-btn">✅ Approve the rest</button>
+        </div>
+        <div class="host-actions">
+          <button id="closeRoundBtn" class="big-btn">Close the round</button>
+          <button id="revealBtn" class="big-btn hidden">Start the reveal</button>
+        </div>
+        <div class="host-actions">
+          <button id="scrapRoundBtn" class="chip-btn">🗑 Scrap this round</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>In the room</h2>
+      <p class="dim small">Tap a name twice to remove them. ○ = hasn't checked in.</p>
+      <div class="roster" id="hostRoster"></div>
+    </div>
+
+    <div class="card">
+      <button id="endEventBtn" class="chip-btn">🌙 End the event</button>
+      <p class="dim small" style="margin-top:8px">Ends the night for every phone. Tap twice.</p>
+    </div>
+  </div>
+
+  <!-- narrated reveal (fullscreen; equals the big screen in dignity) -->
+  <div id="narrated" class="hidden">
+    <div id="narratedTitle"></div>
+    <div id="narratedLines"></div>
+    <div id="narratedStep"></div>
+    <div id="narratedControls">
+      <button id="narratedNext" class="big-btn">Next beat →</button>
+    </div>
+  </div>
+
+  <div id="offlinePanel" class="card hidden">
+    <h1>Party mode isn't switched on yet</h1>
+    <p class="dim">One-time setup: paste <strong>supabase/party-SETUP.sql</strong> into the Supabase SQL editor (see PARTY-SETUP.md). Or rehearse right now with <a href="host.html?demo=1" style="color:var(--amber)">the demo night</a>.</p>
+  </div>
+
+  <footer class="footer">
+    A Btown Games production · <a href="https://www.btownbrief.com" target="_blank" rel="noopener">Read the BTown Brief →</a>
+  </footer>
+</div>
+<script type="module" src="js/host.js"></script>
+</body>
+</html>

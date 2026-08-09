@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="22" fill="#221a14"/>
+  <!-- warm glow from the lights -->
+  <ellipse cx="50" cy="30" rx="44" ry="26" fill="#f2a24a" opacity="0.14"/>
+  <!-- string wire -->
+  <path d="M6 18 Q30 34 50 26 T94 22" stroke="#4a3a2c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- bulbs -->
+  <g>
+    <circle cx="24" cy="30" r="6.5" fill="#ffd9a0"/>
+    <circle cx="24" cy="30" r="9.5" fill="#ffd9a0" opacity="0.25"/>
+    <rect x="22" y="21.5" width="4" height="4" rx="1" fill="#4a3a2c"/>
+  </g>
+  <g>
+    <circle cx="52" cy="33" r="6.5" fill="#f2a24a"/>
+    <circle cx="52" cy="33" r="9.5" fill="#f2a24a" opacity="0.25"/>
+    <rect x="50" y="24.5" width="4" height="4" rx="1" fill="#4a3a2c"/>
+  </g>
+  <g>
+    <circle cx="79" cy="28" r="6.5" fill="#ffd9a0"/>
+    <circle cx="79" cy="28" r="9.5" fill="#ffd9a0" opacity="0.25"/>
+    <rect x="77" y="19.5" width="4" height="4" rx="1" fill="#4a3a2c"/>
+  </g>
+  <!-- the room: heads catching the light -->
+  <g fill="#f6eedd">
+    <circle cx="20" cy="72" r="8"/>
+    <circle cx="40" cy="78" r="9"/>
+    <circle cx="62" cy="74" r="8.5"/>
+    <circle cx="82" cy="79" r="7.5"/>
+  </g>
+  <g fill="#c9b894">
+    <path d="M8 100 a12 13 0 0 1 24 0 Z"/>
+    <path d="M27 100 a13 14 0 0 1 26 0 Z"/>
+    <path d="M49 100 a13 13 0 0 1 26 0 Z"/>
+    <path d="M70 100 a12 12 0 0 1 24 0 Z"/>
+  </g>
+  <!-- two heads turned toward each other, amber — the point of the night -->
+  <circle cx="40" cy="78" r="9" fill="#f2a24a"/>
+  <circle cx="62" cy="74" r="8.5" fill="#f2a24a"/>
+  <path d="M28 100 a13 14 0 0 1 26 0 Z" fill="#d97f1e"/>
+  <path d="M49 100 a13 13 0 0 1 26 0 Z" fill="#d97f1e"/>
+</svg>
