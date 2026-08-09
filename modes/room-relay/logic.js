@@ -68,6 +68,7 @@ export const RELAY = {
   startChainsMax: 40,  // fragments kept from a start round
   expiryS: 150,        // one routing epoch — "a few minutes", roughly
   configBudget: 7400,  // stay under party-core's 8192-byte config cap
+  resultsBudget: 30000, // stay under party-core's 32768-byte results cap
   parkedMax: 2,        // over-budget fragments still revealed as unfinished
   promptsMax: 16,
 };
@@ -216,7 +217,7 @@ export function buildStartConfig({ chainType, totalSteps, deck, checkinQs, seed 
     // The unauthenticated screen face renders config.question.text while a
     // round collects — this line is that marquee (host-authored, no
     // attendee content).
-    question: { text: '🌀 Room Relay — fragments incoming. Grab your phone when you have 20 seconds.' },
+    question: { text: '🌀 Room Relay — fragments incoming. Grab your phone when you\'ve got a sec.' },
   };
 }
 
@@ -282,16 +283,31 @@ export function computeStartResults({ config, approved, checkinTallies }) {
   const seeded = chains.length < RELAY.minChains
     ? seedChains(config, checkinTallies, RELAY.minChains - chains.length)
     : [];
-  return {
+  const out = {
     mode: SLUG,
     rr: 1,
     stage: 'collected',
     chainType: config.chainType,
     totalSteps: config.totalSteps,
-    fragTotal: chains.length,
+    fragTotal: 0,
     seeded: seeded.length,
-    chains: [...chains, ...seeded],
+    dropped: 0,
+    chains: [],
   };
+  // Results are stored on the round and capped at 32 KB by the backend —
+  // a big room of near-budget doodles can exceed that, so keep chains by
+  // serialized size, not count, and say how many fell off (no silent caps:
+  // the teaser beat reports the number).
+  for (const chain of [...chains, ...seeded]) {
+    out.chains.push(chain);
+    if (jsonBytes(out) > RELAY.resultsBudget) {
+      out.chains.pop();
+      out.dropped += 1;
+    }
+  }
+  out.fragTotal = out.chains.filter((c) => c.steps[0].authorId != null).length;
+  out.seeded = out.chains.length - out.fragTotal;
+  return out;
 }
 
 /* --------------------------------------------------------- continue round */
@@ -510,13 +526,12 @@ export function narratedBeat(step, results) {
   switch (b.k) {
     case 'teaser': {
       const n = results?.chains?.length ?? 0;
-      return {
-        title: 'Room Relay',
-        lines: [
-          `${n} fragment${n === 1 ? '' : 's'} are in.`,
-          'They\'re being shuffled to new hands — keep your phone nearby.',
-        ],
-      };
+      const lines = [
+        `${n} fragment${n === 1 ? '' : 's'} are in.`,
+        'They\'re being shuffled to new hands — keep your phone nearby.',
+      ];
+      if (results?.dropped) lines.push(`(${results.dropped} couldn't fit tonight's reveal budget.)`);
+      return { title: 'Room Relay', lines };
     }
     case 'intro':
       return {
@@ -528,7 +543,7 @@ export function narratedBeat(step, results) {
     case 'step': {
       const s = chain.steps[b.si];
       const what = s.frag.t === 'doodle'
-        ? `${s.by} drew it — ${decodeDoodle(s.frag.d)?.length ?? 0} strokes of pure confidence. It's on the screen.`
+        ? `${s.by} answered in ink — ${decodeDoodle(s.frag.d)?.length ?? 0} strokes of pure confidence.`
         : `“${s.frag.s}”`;
       return {
         title: b.si === 0 ? `${nth} — the fragment` : `${nth} — then ${s.by} got it`,
@@ -543,7 +558,7 @@ export function narratedBeat(step, results) {
         title: 'That\'s the relay',
         lines: [
           `${results.finished} finished chain${results.finished === 1 ? '' : 's'}${flops ? `, ${flops} beautiful loose end${flops === 1 ? '' : 's'}` : ''}.`,
-          'Go find out who titled yours.',
+          'The gallery is open — argue accordingly.',
         ],
       };
     }

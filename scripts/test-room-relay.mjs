@@ -176,6 +176,30 @@ is(bigPlan.chains.length + bigPlan.parked.length + bigPlan.dropped, 14,
 is(new Set(bigPlan.chains.map((c) => c.slot)).size, bigPlan.chains.length, 'rotation slots are distinct');
 truthy(bigPlan.chains.length >= 4, 'a healthy number of doodle chains still fit the budget');
 
+const nearMax = (() => {
+  let best = '';
+  for (let ns = 1; ns <= RELAY.doodleStrokes; ns++) {
+    const d = encodeDoodle(Array.from({ length: ns }, (_, i) => ({
+      c: i % RELAY.colors, w: i % 2, pts: Array.from({ length: 13 }, (_, j) => [j * 4 % 64, (i + j) % 64]),
+    })));
+    if (d.length <= RELAY.doodleChars && d.length > best.length) best = d;
+  }
+  return best;
+})();
+const hugeRoom = computeStartResults({
+  config: doodleCfg,
+  approved: Array.from({ length: 40 }, (_, i) => ({
+    name: `LongishName${i}`, payload: { rr: 1, author: `ply-big-${i}`, prompt: 0, frag: { t: 'doodle', d: nearMax } },
+  })),
+  checkinTallies: [],
+});
+is(JSON.stringify(hugeRoom).length <= 32768, true,
+  'a 40-doodle room stays under the backend\'s 32 KB results cap');
+truthy(hugeRoom.dropped > 0 && hugeRoom.chains.length + hugeRoom.dropped === 40,
+  'over-budget fragments are counted as dropped, never silently lost');
+is(decodeDoodle(encodeDoodle([{ c: 0, w: 1, pts: [[5, 5], [5, 5]] }])).length, 1,
+  'a tap-dot stroke (duplicated point) survives the codec');
+
 is(buildContinuePlan({ prior: doodleRes, players: [], seed: 5 }), null, 'no plan without players');
 is(buildContinuePlan({ prior: { ...startRes, stage: 'done' }, players: players14, seed: 5 }), null, 'a finished relay does not re-plan');
 

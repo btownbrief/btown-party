@@ -149,6 +149,8 @@ export function hostSetup(ctx, mount) {
     });
     wrap.appendChild(btn);
   });
+  wrap.appendChild(el('p', 'dim small',
+    'No TV tonight? Pick Headline → next line — it narrates perfectly. Doodle flavors want the big screen.'));
 }
 
 /* ------------------------------------------------------------ moderation */
@@ -275,6 +277,8 @@ function doodlePad(onFirstInk) {
   });
   window.addEventListener('pointerup', () => {
     if (!live) return;
+    // A tap is a dot: duplicate the point so the stroke stays decodable.
+    if (live.pts.length === 1) live.pts.push([...live.pts[0]]);
     strokes.push(live);
     live = null;
     if (strokes.length > RELAY.doodleStrokes
@@ -314,7 +318,7 @@ function doodlePad(onFirstInk) {
 /* ----------------------------------------------------------- phone input */
 
 const KIND_HINT = {
-  doodle: 'Fat brush, fifteen seconds, no artistic pressure.',
+  doodle: 'Fat brush, a few seconds, no artistic pressure.',
   title: 'Short and confident — like it hangs in a gallery.',
   phrase: 'One line. Someone you haven\'t met will deal with it.',
   headline: 'Finish it like the paper would never dare.',
@@ -433,10 +437,17 @@ export function phoneCollect(ctx, mount) {
   };
 
   (async () => {
-    const pid = await myPlayerId();
+    let pid = await myPlayerId();
+    let fetching = false;
     const tick = () => {
       if (!mount.isConnected) { clearInterval(timer); return; }
       if (locked) return;
+      if (pid == null && !fetching) {
+        // Identity lookup can fail transiently — keep retrying, or this
+        // phone would sit on the waiting card for the whole round.
+        fetching = true;
+        myPlayerId().then((v) => { pid = v; }).finally(() => { fetching = false; });
+      }
       const epoch = epochAt(config, Math.floor(Date.now() / 1000));
       const chain = assignmentFor(config, pid, epoch);
       if (!chain) {
@@ -534,7 +545,7 @@ export function renderBeat(mount, step, results) {
       root.appendChild(el('div', 'beat-kicker land', 'That\'s the relay'));
       root.appendChild(el('h2', 'beat-question land',
         `${results.finished} finished chain${results.finished === 1 ? '' : 's'}${flops ? ` · ${flops} beautiful loose end${flops === 1 ? '' : 's'}` : ''}`));
-      root.appendChild(el('div', 'beat-sub land', 'Go find out who titled yours.'));
+      root.appendChild(el('div', 'beat-sub land', 'The gallery is open — argue accordingly.'));
     }
   }
 }
