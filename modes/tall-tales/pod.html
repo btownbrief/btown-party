@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#221a14">
+<title>TALL TALES — Pod play</title>
+<meta name="description" content="A table of 3–6 runs itself through three verified Burlington facts: one phone, everyone lies, everyone hunts the truth. A Btown Games production from the BTown Brief.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../../icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  /* Pod-only trim: everything else reuses the party's house styles. */
+  .pod-names { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+  .pod-reveal-title { font-size: 1.05rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75; margin-bottom: 10px; }
+  .pod-line { font-size: 1.35rem; line-height: 1.35; margin: 10px 0; }
+  .pod-line.secondary { font-size: 1.05rem; opacity: 0.8; }
+  .pod-strike { text-decoration: line-through; opacity: 0.45; }
+  .pod-row { display: flex; align-items: center; gap: 10px; }
+  .pod-row .collect-opt { flex: 1; margin: 4px 0; }
+  .pod-row .chip-btn { flex: 0 0 auto; }
+</style>
+</head>
+<body class="face-phone">
+<div class="page">
+  <div class="brand"><span class="b-party">TALL TALES</span><span class="b-sub">pod play — a Btown Games production</span></div>
+  <div id="podRoot" class="card"><p class="dim">Loading the fact deck…</p></div>
+  <div class="footer small dim">One phone, laid flat, is the table's screen. Ten seconds each, then eyes up.</div>
+</div>
+<script type="module" src="pod.js"></script>
+</body>
+</html>

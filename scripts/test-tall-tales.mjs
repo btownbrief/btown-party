@@ -1,0 +1,313 @@
+// Tests for modes/tall-tales/logic.js — plain Node, no framework:
+//   node scripts/test-tall-tales.mjs
+// Ballot building (dedupe, truth-match safety net, seeded-shuffle
+// determinism), vote scoring (truth-finding, fooled pay, own-vote
+// rejection, every tie), the beat plan (source beat always present, the
+// 40-step reveal cap), moderation gating, the silver-tongue board, the
+// needsReview picker gate, and the shipped fact deck's schema.
+import { readFileSync } from 'node:fs';
+import {
+  SLUG, SCORING, LIE_MAX_LEN, MAX_LIE_BEATS, MAX_CONFIG_BYTES,
+  normalizeText, seedFrom, seededShuffle, cleanLie, cleanVote, buildBallot,
+  configBytes, buildVoteConfig,
+  computeLiesResults, computeVoteResults, computeResults, voteBeatPlan,
+  beatCount, scoreboard, narratedBeat, validateFacts, pickableFacts, factById,
+} from '../modes/tall-tales/logic.js';
+
+let failures = 0;
+function is(actual, expected, label) {
+  const ok = JSON.stringify(actual) === JSON.stringify(expected);
+  if (!ok) {
+    failures += 1;
+    console.error(`✗ ${label}\n    expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+  } else {
+    console.log(`✓ ${label}`);
+  }
+}
+
+const FACT = {
+  id: 'tt-901',
+  setup: 'In 1979, Winooski planned to cover the whole city with ___.',
+  answer: 'a giant dome',
+  source: { url: 'https://example.test/dome', title: 'VTDigger: The Winooski Dome', quote: 'a dome over the city' },
+};
+const lie = (name, text) => ({ name, text });
+const voteFor = (name, key) => ({ name, payload: { kind: 'vote', key } });
+
+// ---- input hygiene -----------------------------------------------------
+is(cleanLie({ kind: 'lie', text: '  a moat of maple syrup ' }), { text: 'a moat of maple syrup' },
+  'a clean lie passes through trimmed');
+is(cleanLie({ text: 'x'.repeat(200) }).text.length, LIE_MAX_LEN, 'a long lie caps at the max length');
+is(cleanLie({ text: '   ' }), null, 'a blank lie is dropped');
+is(cleanLie({ text: 'a\u0000b\tc' }), { text: 'a b c' }, 'control characters become spaces');
+is(cleanLie(null), null, 'a null payload is dropped');
+is(cleanLie('a string'), null, 'a non-object payload is dropped');
+
+const miniBallot = { entries: [{ key: 'e0' }, { key: 'e1' }] };
+is(cleanVote({ kind: 'vote', key: 'e1' }, miniBallot), { key: 'e1' }, 'a clean vote passes through');
+is(cleanVote({ key: 'e9' }, miniBallot), null, 'a vote for a key not on the ballot is dropped');
+is(cleanVote({ key: 3 }, miniBallot), null, 'a non-string key is dropped');
+is(cleanVote(null, miniBallot), null, 'a null vote payload is dropped');
+
+// ---- seeded shuffle determinism ----------------------------------------
+{
+  const arr = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+  is(seededShuffle(arr, 42), seededShuffle(arr, 42), 'same seed → same order, every time');
+  is(JSON.stringify(seededShuffle(arr, 42)) !== JSON.stringify(seededShuffle(arr, 43)), true,
+    'different seeds → different orders (for this array)');
+  is([...seededShuffle(arr, 42)].sort(), arr, 'a shuffle is a permutation — nothing lost');
+  is(arr, ['a', 'b', 'c', 'd', 'e', 'f', 'g'], 'the input array is untouched');
+  is(seedFrom('tt-001|3'), seedFrom('tt-001|3'), 'seedFrom is deterministic');
+  is(seedFrom('tt-001|3') !== seedFrom('tt-002|3'), true, 'seedFrom separates inputs');
+}
+
+// ---- the ballot ---------------------------------------------------------
+const LIES4 = [
+  lie('Ada', 'a flock of emus'),
+  lie('Ben', 'A FLOCK OF EMUS'),        // duplicate of Ada's, different case
+  lie('Cleo', 'a giant dome!'),          // IS the truth (normalized) → safety net
+  lie('Dot', 'the world’s largest zamboni'),
+];
+const B = buildBallot({ fact: FACT, lies: LIES4, seed: 7 });
+is(B.entries.length, 3, 'ballot: two merged lies + the truth (truth-match dropped)');
+is(B.entries.map((e) => e.key), ['e0', 'e1', 'e2'], 'ballot keys follow display order');
+is(B.entries.find((e) => e.truth).text, 'a giant dome', 'the truth entry carries the answer');
+is(B.truthKey, B.entries.find((e) => e.truth).key, 'truthKey points at the truth entry');
+is(B.entries.find((e) => normalizeText(e.text) === normalizeText('a flock of emus')).authors,
+  ['Ada', 'Ben'], 'duplicate lies merge and credit every author');
+is(B.truthMatchers, ['Cleo'], 'writing the truth never puts a second “truth” on the ballot');
+is(JSON.stringify(buildBallot({ fact: FACT, lies: LIES4, seed: 7 })), JSON.stringify(B),
+  'ballot building is fully deterministic for the same inputs');
+{
+  const orders = new Set(Array.from({ length: 10 }, (_, i) =>
+    JSON.stringify(buildBallot({ fact: FACT, lies: LIES4, seed: i + 1 }).entries.map((e) => e.text))));
+  is(orders.size > 1, true, 'different seeds deal different ballot orders');
+}
+{
+  const noLies = buildBallot({ fact: FACT, lies: [], seed: 1 });
+  is(noLies.entries.length, 1, 'a lie-less ballot still carries the truth');
+  is(noLies.truthKey, 'e0', 'the lone entry is the truth');
+}
+
+// ---- round A: lies ------------------------------------------------------
+const liesConfig = { phase: 'lies', fact: { id: FACT.id, setup: FACT.setup } };
+const rLies = computeResults({
+  config: liesConfig,
+  approved: [
+    { name: 'Ada', payload: { kind: 'lie', text: 'a flock of emus' } },
+    { name: 'Broken', payload: { pick: 1 } },  // malformed → sits out
+    { name: 'Blank', payload: { text: '   ' } },
+  ],
+});
+is(rLies.mode, SLUG, 'lies results carry the mode slug');
+is(rLies.phase, 'lies', 'lies results carry the phase');
+is(rLies.count, 1, 'malformed and blank payloads sit the round out');
+is(rLies.lies, [{ name: 'Ada', text: 'a flock of emus' }], 'approved lies are stored for the vote round');
+is(beatCount(rLies), 1, 'the lies round bridges in one beat');
+is(computeResults({ config: liesConfig, approved: [] }).count, 0,
+  'zero approved lies still computes cleanly (porous room)');
+
+// ---- round B: the vote --------------------------------------------------
+// Ballot: emus (Ada+Ben) / zamboni (Dot) / truth. Cleo wrote the truth.
+const emusKey = B.entries.find((e) => !e.truth && e.text.includes('emus')).key;
+const zamboniKey = B.entries.find((e) => !e.truth && e.text.includes('zamboni')).key;
+const voteConfig = { phase: 'vote', fact: FACT, ballot: B };
+const rVote = computeResults({
+  config: voteConfig,
+  approved: [
+    voteFor('Ada', zamboniKey),   // fooled by Dot
+    voteFor('Ben', emusKey),      // OWN lie (co-author) → discarded
+    voteFor('Cleo', B.truthKey),  // wrote the truth → this vote is discarded
+    voteFor('Dot', B.truthKey),   // found the truth
+    voteFor('Eve', emusKey),      // fooled by Ada+Ben
+    { name: 'Mal', payload: { key: 'nope' } }, // malformed → sits out
+  ],
+});
+is(rVote.phase, 'vote', 'vote results carry the phase');
+is(rVote.entries.find((e) => e.key === emusKey).votes, 1,
+  'own-vote rejection: a co-author’s vote for their own lie never counts');
+is(rVote.entries.find((e) => e.key === emusKey).voters, ['Eve'], 'only the fooled outsider is recorded');
+is(rVote.truthFinders, ['Dot'], 'truth finders are named — a truth-WRITER’s vote is not among them');
+const score = (n) => rVote.scores.find((s) => s.name === n)?.points;
+is(score('Cleo'), SCORING.truthPoints,
+  'a truth-writer is paid the truth award exactly ONCE — voting for it too never doubles it');
+is(score('Dot'), SCORING.truthPoints + SCORING.fooledPoints * 1,
+  'a truth finder whose lie also fooled one voter stacks both');
+is(score('Ada'), SCORING.fooledPoints * 1, 'fooled-scoring: 50 per voter your lie took in');
+is(score('Ben'), SCORING.fooledPoints * 1, 'every co-author of a merged lie gets the full fooled pay');
+is(score('Eve'), undefined, 'voting for a lie earns nothing');
+is(rVote.bestLiars, ['Ada', 'Ben', 'Dot'],
+  'tie handling: everyone whose lies fooled the most votes shares silver tongue');
+
+// ---- ties, quiet rooms, edge shapes -------------------------------------
+{
+  const quiet = computeVoteResults({ config: voteConfig, approved: [] });
+  is(quiet.truthFinders, [], 'zero votes: nobody found the truth');
+  is(quiet.bestLiars, [], 'zero votes: no silver tongue');
+  is(quiet.scores.map((s) => [s.name, s.points]),
+    [['Cleo', SCORING.truthPoints], ['Ada', 0], ['Ben', 0], ['Dot', 0]],
+    'zero votes: the truth-writer scores, unfooling liars sit at 0 (still on the board — they played)');
+  is(beatCount(quiet) >= 4, true, 'zero votes: the reveal still has its beats');
+}
+{
+  const solo = buildBallot({ fact: FACT, lies: [], seed: 1 });
+  const r = computeVoteResults({
+    config: { phase: 'vote', fact: FACT, ballot: solo },
+    approved: [voteFor('Ada', solo.truthKey)],
+  });
+  is(r.truthFinders, ['Ada'], 'a lie-less ballot still plays: truth or nothing');
+}
+{
+  const twoTruthies = computeVoteResults({
+    config: voteConfig,
+    approved: [voteFor('Pat', B.truthKey), voteFor('Quinn', B.truthKey)],
+  });
+  const pts = twoTruthies.scores.filter((s) => ['Pat', 'Quinn'].includes(s.name)).map((s) => s.points);
+  is(pts, [SCORING.truthPoints, SCORING.truthPoints], 'tied truth finders both get full points');
+}
+
+// ---- the vote-round config fits the wire ---------------------------------
+{
+  is(configBytes('🍁🍁'), JSON.stringify('🍁🍁').length + 4,
+    'configBytes counts UTF-8 bytes — an emoji is 4, not the 2 UTF-16 units .length reports');
+  const small = buildVoteConfig({ fact: FACT, lies: LIES4, liesRound: 'rnd-9', seed: 7 });
+  is(small.dropped, [], 'a normal room drops nothing');
+  is(small.config.liesRound, 'rnd-9', 'the vote config names its lies round (own-lie stash key)');
+  is(small.config.phase, 'vote', 'the built config is a vote config');
+  is(small.config.fact.answer, FACT.answer, 'the built config carries the answer');
+  is(small.config.fact.source.url, FACT.source.url, 'the built config carries the source');
+  is(configBytes(small.config) <= MAX_CONFIG_BYTES, true, 'a normal config fits the byte budget');
+
+  // A packed room of 60 max-length emoji lies: JSON.stringify().length
+  // would under-count this by thousands of bytes.
+  const packed = Array.from({ length: 60 }, (_, i) =>
+    lie(`Player${i}`, `🍁 lie ${i} ${'🦆'.repeat(30)}`.slice(0, LIE_MAX_LEN)));
+  const big = buildVoteConfig({ fact: FACT, lies: packed, liesRound: 'rnd-9', seed: 7 });
+  is(configBytes(big.config) <= MAX_CONFIG_BYTES, true,
+    '60 max-length emoji lies: the config is trimmed under the byte budget');
+  is(big.dropped.length > 0, true, 'the longest lies were dropped, with their authors named');
+  is(big.config.ballot.entries.some((e) => e.truth), true, 'the truth always survives the trim');
+  is(JSON.stringify(buildVoteConfig({ fact: FACT, lies: packed, liesRound: 'rnd-9', seed: 7 })),
+    JSON.stringify(big), 'trimming is deterministic');
+}
+
+// ---- moderation gating ---------------------------------------------------
+// The shell hands computeResults APPROVED submissions only, and the backend
+// rejects pendings at start_reveal. Nothing in this module can resurrect an
+// entry it was never given:
+{
+  const heldLie = 'the mayor’s pet moose';
+  const r = computeLiesResults({
+    config: liesConfig,
+    approved: [{ name: 'Ada', payload: { text: 'a flock of emus' } }], // held lie NOT passed
+  });
+  is(JSON.stringify(r).includes(heldLie), false, 'a held lie never reaches the stored lies');
+  const ballot = buildBallot({ fact: FACT, lies: r.lies, seed: 3 });
+  is(JSON.stringify(ballot).includes(heldLie), false, 'a held lie never reaches the ballot');
+  is(JSON.stringify(rVote).includes('pending'), false, 'results never mention unapproved entries');
+}
+
+// ---- the beat plan --------------------------------------------------------
+{
+  const kinds = rVote.beatPlan.map((b) => b.kind);
+  is(kinds[0], 'setup', 'the reveal opens on the setup');
+  is(kinds[1], 'ballot', 'then the full ballot');
+  is(kinds.includes('truth'), true, 'the truth beat is always in the plan');
+  is(kinds.includes('source'), true, 'THE SOURCE BEAT IS ALWAYS IN THE PLAN');
+  is(kinds.indexOf('truth') > kinds.indexOf('liar'), true, 'best liar is celebrated before the truth');
+  is(kinds.indexOf('source'), kinds.indexOf('truth') + 1, 'the source lands right after the truth');
+  is(kinds[kinds.length - 1], 'board', 'the running board closes the reveal');
+  // lie beats land ascending by votes:
+  const lieBeats = rVote.beatPlan.filter((b) => b.kind === 'lie');
+  const counts = lieBeats.map((b) => rVote.entries.find((e) => e.key === b.keys[0]).votes);
+  is(counts, [...counts].sort((a, b) => a - b), 'solo lie beats land in ascending vote order');
+}
+{
+  // 30 voted lies from a packed room: the low end groups, the plan stays
+  // far under the backend's 40-step reveal cap.
+  const manyLies = Array.from({ length: 30 }, (_, i) => lie(`P${i}`, `big lie number ${i}`));
+  const bigBallot = buildBallot({ fact: FACT, lies: manyLies, seed: 5 });
+  const votes = [];
+  let v = 0;
+  for (const e of bigBallot.entries) {
+    if (e.truth) continue;
+    votes.push(voteFor(`V${v++}x`, e.key)); // one vote each → all "voted"
+  }
+  const r = computeVoteResults({ config: { phase: 'vote', fact: FACT, ballot: bigBallot }, approved: votes });
+  const kinds = r.beatPlan.map((b) => b.kind);
+  is(kinds.filter((k) => k === 'lie').length, MAX_LIE_BEATS, 'solo lie beats cap at MAX_LIE_BEATS');
+  is(kinds.includes('liesGroup'), true, 'the overflow groups into one beat');
+  is(r.beatPlan.length <= 15, true, `a 30-lie round reveals in ${r.beatPlan.length} beats (cap 40)`);
+  is(voteBeatPlan(r.entries).length === r.beatPlan.length, true, 'the plan derives purely from entries');
+}
+
+// ---- narrated beats --------------------------------------------------------
+for (const [label, r] of [['lies', rLies], ['vote', rVote]]) {
+  for (let i = 0; i < beatCount(r); i++) {
+    const b = narratedBeat(i, r, scoreboard([rVote]));
+    if (typeof b.title !== 'string' || !Array.isArray(b.lines) || !b.lines.length
+        || b.lines.some((l) => typeof l !== 'string' || !l.trim())) {
+      failures += 1;
+      console.error(`✗ ${label} narrated beat ${i} is not readable aloud: ${JSON.stringify(b)}`);
+    }
+  }
+}
+console.log('✓ every beat of both rounds produces narratable lines');
+is(narratedBeat(99, rVote, []).kind, 'board', 'an over-long step clamps to the last beat');
+is(narratedBeat(rVote.beatPlan.findIndex((b) => b.kind === 'source'), rVote, []).lines
+  .includes(FACT.source.url), true, 'the narrated source beat reads out the citation');
+is(narratedBeat(rVote.beatPlan.findIndex((b) => b.kind === 'truth'), rVote, []).lines[0],
+  FACT.answer, 'the narrated truth beat leads with the answer');
+
+// ---- the silver-tongue board ----------------------------------------------
+{
+  const board = scoreboard([rVote, rLies, { mode: 'other-mode', phase: 'vote', scores: [{ name: 'X', points: 999 }] }]);
+  is(board.find((b) => b.name === 'X'), undefined, 'other modes’ results are ignored');
+  is(board.find((b) => b.name === 'Cleo').points, SCORING.truthPoints, 'the board sums per name');
+  is(board[0].name, 'Dot', 'the board sorts best silver tongue first (truth find + a fooled voter)');
+  const twice = scoreboard([rVote, rVote]);
+  is(twice.find((b) => b.name === 'Dot').points, 2 * (SCORING.truthPoints + SCORING.fooledPoints),
+    'points accumulate round over round');
+  is(twice.find((b) => b.name === 'Dot').rounds, 2, 'round counts accumulate too');
+  is(scoreboard([]), [], 'an empty night is an empty board');
+  is(scoreboard([rLies]), [], 'lies rounds alone put nothing on the board');
+}
+
+// ---- THE CURATION GATE ------------------------------------------------------
+{
+  const deck = {
+    version: 1,
+    facts: [
+      { id: 'tt-101', needsReview: false },
+      { id: 'tt-102', needsReview: true },
+      { id: 'tt-103' },                      // missing flag = NOT reviewed
+      { id: 'tt-104', needsReview: 'false' } // stringly flag = NOT reviewed
+    ],
+  };
+  is(pickableFacts(deck).map((f) => f.id), ['tt-101'],
+    'the default picker shows ONLY facts explicitly flipped to needsReview:false');
+  is(pickableFacts(deck, { showUnreviewed: true }).length, 4,
+    'the testing toggle shows everything');
+  is(pickableFacts(null), [], 'no deck, no facts');
+  is(factById(deck, 'tt-102').id, 'tt-102', 'factById finds a fact');
+  is(factById(deck, 'tt-999'), null, 'factById misses gracefully');
+}
+
+// ---- the shipped deck --------------------------------------------------------
+const deck = JSON.parse(readFileSync(new URL('../modes/tall-tales/content/talltales-facts.json', import.meta.url), 'utf8'));
+is(validateFacts(deck), [], 'the shipped deck passes schema validation');
+is(deck.facts.length >= 12, true, 'the deck has a real night’s worth of facts');
+is(deck.facts.every((f) => typeof f.needsReview === 'boolean'), true,
+  'every shipped fact carries an explicit needsReview flag');
+is(validateFacts({ version: 1, facts: [{ id: 'bad', setup: 'no blank here at all', answer: '' }] }).length > 0,
+  true, 'a malformed deck is called out');
+{
+  const reviewed = pickableFacts(deck).length;
+  console.log(`  (deck status: ${reviewed} of ${deck.facts.length} facts reviewed — unreviewed facts stay out of the picker)`);
+}
+
+if (failures > 0) {
+  console.error(`\n${failures} test(s) FAILED`);
+  process.exit(1);
+}
+console.log('\nAll Tall Tales tests passed.');
