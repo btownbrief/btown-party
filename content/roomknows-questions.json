@@ -4,74 +4,487 @@
     {
       "id": "rk-001",
       "text": "Your creemee order:",
-      "options": ["Maple", "Chocolate-vanilla twist", "Black raspberry"],
-      "tags": ["food", "burlington", "classic"]
+      "options": ["Maple", "Chocolate", "Twist", "Black raspberry"],
+      "tags": ["food", "local", "debate", "checkin"]
     },
     {
       "id": "rk-002",
-      "text": "Which one is worse?",
-      "options": ["Mud season", "Stick season"],
-      "tags": ["seasons", "vermont"]
+      "text": "Sprinkles on that creemee?",
+      "options": ["Obviously", "Never"],
+      "tags": ["food", "local", "debate"]
     },
     {
       "id": "rk-003",
-      "text": "Church Street on a summer Saturday:",
-      "options": ["Love the crowd", "I'll come back Tuesday morning"],
-      "tags": ["burlington", "temperament"]
+      "text": "A dozen cider donuts leaves the orchard. How many make it home?",
+      "options": ["All twelve", "Most of them", "A few", "Zero"],
+      "tags": ["food", "seasonal"]
     },
     {
       "id": "rk-004",
-      "text": "The lake on a hot day — where are you?",
-      "options": ["In the water", "On a towel", "At a table with a view of the water"],
-      "tags": ["burlington", "summer", "temperament"]
+      "text": "Which is worse: mud season or stick season?",
+      "options": ["Mud season", "Stick season"],
+      "tags": ["seasonal", "local", "debate", "spicy"]
     },
     {
       "id": "rk-005",
-      "text": "First real snowfall of the year:",
-      "options": ["Out in it by nine", "Watching it from the window with something warm"],
-      "tags": ["winter", "temperament"]
+      "text": "First real snow of the year:",
+      "options": ["Still magic", "Here we go"],
+      "tags": ["seasonal", "temperament", "checkin"]
     },
     {
       "id": "rk-006",
-      "text": "Your coffee order:",
-      "options": ["Black", "Basically a milkshake", "Tea, actually"],
-      "tags": ["food", "classic"]
+      "text": "You can only keep one: the lake or the mountains.",
+      "options": ["The lake", "The mountains"],
+      "tags": ["local", "debate", "spicy"]
     },
     {
       "id": "rk-007",
-      "text": "Driving up the hill in January:",
-      "options": ["I drive in anything", "One flake and I'm staying home"],
-      "tags": ["winter", "vermont"]
+      "text": "Coldest you've willingly gone in the lake:",
+      "options": ["Peak August only", "June-ish", "Early May", "There was ice"],
+      "tags": ["local", "temperament", "spicy"]
     },
     {
       "id": "rk-008",
-      "text": "The farmers market:",
-      "options": ["Every week, tote in hand", "A couple times a summer, mostly for the samples"],
-      "tags": ["burlington", "food"]
+      "text": "Your winter is mostly:",
+      "options": ["Skis", "A snowboard", "Snowshoes", "Indoors, thanks"],
+      "tags": ["seasonal", "local", "temperament"]
     },
     {
       "id": "rk-009",
-      "text": "A free Saturday in October:",
-      "options": ["Up a mountain", "At a game or on the couch", "Errands, gloriously alone"],
-      "tags": ["fall", "temperament"]
+      "text": "Vermont winter is:",
+      "options": ["The whole point", "The price you pay"],
+      "tags": ["seasonal", "debate", "spicy"]
     },
     {
       "id": "rk-010",
-      "text": "Cider doughnuts:",
-      "options": ["Only warm from the bag", "Any doughnut is a good doughnut"],
-      "tags": ["food", "fall", "vermont"]
+      "text": "At the farmers market, you're:",
+      "options": ["A list and a mission", "A wander and a snack"],
+      "tags": ["local", "food", "temperament"]
     },
     {
       "id": "rk-011",
-      "text": "Camel's Hump or Mansfield?",
-      "options": ["Camel's Hump", "Mansfield", "The view from the parking lot"],
-      "tags": ["vermont", "outdoors"]
+      "text": "The Saturday farmers market:",
+      "options": ["Most weeks", "A few times a summer", "I keep meaning to"],
+      "tags": ["local", "food", "temperament"]
     },
     {
       "id": "rk-012",
-      "text": "Burlington to Middlebury — which way do you go?",
-      "options": ["Route 7, windows down", "The interstate, I have places to be"],
-      "tags": ["vermont", "temperament"]
+      "text": "Maple syrup:",
+      "options": ["Golden, delicate", "Dark, robust"],
+      "tags": ["food", "local", "debate", "checkin"]
+    },
+    {
+      "id": "rk-013",
+      "text": "Is there fake maple syrup anywhere in your house?",
+      "options": ["Never crossed the door", "There's a bottle hiding"],
+      "tags": ["food", "local", "spicy"]
+    },
+    {
+      "id": "rk-014",
+      "text": "Church Street on a summer Friday:",
+      "options": ["Right down the middle", "Cut over a block"],
+      "tags": ["local", "temperament"]
+    },
+    {
+      "id": "rk-015",
+      "text": "The Winooski roundabout:",
+      "options": ["Works beautifully", "White-knuckle"],
+      "tags": ["local", "debate", "spicy"]
+    },
+    {
+      "id": "rk-016",
+      "text": "One Ben & Jerry's pint, forever:",
+      "options": ["Phish Food", "Cherry Garcia", "Half Baked", "Americone Dream"],
+      "tags": ["food", "debate", "checkin"],
+      "notes": "Read the last-place pint aloud too — the losers are half the fun."
+    },
+    {
+      "id": "rk-017",
+      "text": "Leaf season traffic:",
+      "options": ["A fair trade", "An October menace"],
+      "tags": ["seasonal", "local", "debate", "spicy"]
+    },
+    {
+      "id": "rk-018",
+      "text": "Peak foliage:",
+      "options": ["You drive somewhere for it", "It comes to you"],
+      "tags": ["seasonal", "temperament"]
+    },
+    {
+      "id": "rk-019",
+      "text": "On a mountain, you're:",
+      "options": ["Summit or nothing", "The lookout is plenty"],
+      "tags": ["local", "temperament"]
+    },
+    {
+      "id": "rk-020",
+      "text": "Camel's Hump or Mansfield?",
+      "options": ["Camel's Hump", "Mansfield"],
+      "tags": ["local", "debate", "checkin"]
+    },
+    {
+      "id": "rk-021",
+      "text": "A snow day, as an adult:",
+      "options": ["Still thrilling", "Just logistics now"],
+      "tags": ["seasonal", "cozy", "checkin"]
+    },
+    {
+      "id": "rk-022",
+      "text": "Shoveling the driveway:",
+      "options": ["Weirdly satisfying", "Pure misery"],
+      "tags": ["seasonal", "temperament"]
+    },
+    {
+      "id": "rk-023",
+      "text": "Ice scrapers in your car right now:",
+      "options": ["None", "One", "Several", "A spatula counts"],
+      "tags": ["seasonal", "local", "temperament"]
+    },
+    {
+      "id": "rk-024",
+      "text": "Winter tires:",
+      "options": ["Swapped religiously", "All-seasons and hope"],
+      "tags": ["local", "seasonal", "debate"]
+    },
+    {
+      "id": "rk-025",
+      "text": "Champ:",
+      "options": ["Something's down there", "It's a log"],
+      "tags": ["local", "debate", "cozy", "checkin"]
+    },
+    {
+      "id": "rk-026",
+      "text": "A great waterfront sunset:",
+      "options": ["Still take the photo", "Just watch now"],
+      "tags": ["local", "cozy", "temperament"]
+    },
+    {
+      "id": "rk-027",
+      "text": "How long before someone counts as a Vermonter?",
+      "options": ["The day they arrive", "A decade", "A generation", "Never"],
+      "tags": ["local", "spicy", "debate"],
+      "notes": "Give the Never voters their moment. Half the room moved here."
+    },
+    {
+      "id": "rk-028",
+      "text": "The word \"flatlander\" is:",
+      "options": ["Affectionate", "A little mean"],
+      "tags": ["local", "spicy", "debate"]
+    },
+    {
+      "id": "rk-029",
+      "text": "Passing a stranger on the trail:",
+      "options": ["Hello, every time", "A nod", "Headphones stay in"],
+      "tags": ["local", "temperament"]
+    },
+    {
+      "id": "rk-030",
+      "text": "A February dip in the lake:",
+      "options": ["Done it", "Someday", "Hard no"],
+      "tags": ["local", "seasonal", "temperament"]
+    },
+    {
+      "id": "rk-031",
+      "text": "A weekend at a cabin with no cell service:",
+      "options": ["Heaven", "One night, max", "An actual nightmare"],
+      "tags": ["cozy", "temperament"]
+    },
+    {
+      "id": "rk-032",
+      "text": "Given the choice:",
+      "options": ["Woodstove", "Thermostat"],
+      "tags": ["cozy", "local", "debate"]
+    },
+    {
+      "id": "rk-033",
+      "text": "Sugar on snow:",
+      "options": ["A delicacy", "Sticky snow", "Never had it"],
+      "tags": ["food", "seasonal", "local", "debate"],
+      "notes": "Read the never-had-it number aloud — it quietly maps who grew up here."
+    },
+    {
+      "id": "rk-034",
+      "text": "Apple picking:",
+      "options": ["Annual ritual", "Stores sell apples"],
+      "tags": ["seasonal", "food", "temperament"]
+    },
+    {
+      "id": "rk-035",
+      "text": "Best month in Vermont:",
+      "options": ["June", "September", "October", "February"],
+      "tags": ["seasonal", "debate", "checkin"]
+    },
+    {
+      "id": "rk-036",
+      "text": "Out-of-town guests land. First stop:",
+      "options": ["The lake", "A creemee", "Church Street", "Up a mountain"],
+      "tags": ["local", "temperament"]
+    },
+    {
+      "id": "rk-037",
+      "text": "A free Saturday in July:",
+      "options": ["On the water", "On a trail", "Market crawl", "Porch and a book"],
+      "tags": ["local", "temperament"]
+    },
+    {
+      "id": "rk-038",
+      "text": "A free Saturday in January:",
+      "options": ["On snow", "Under a blanket", "Somewhere warm, with people", "Errand victory lap"],
+      "tags": ["seasonal", "cozy", "temperament"]
+    },
+    {
+      "id": "rk-039",
+      "text": "A rainy Sunday:",
+      "options": ["A gift", "Cabin fever"],
+      "tags": ["cozy", "temperament"]
+    },
+    {
+      "id": "rk-040",
+      "text": "Is there a foliage photo on your phone right now?",
+      "options": ["Obviously", "Somehow, no"],
+      "tags": ["seasonal", "local"]
+    },
+    {
+      "id": "rk-041",
+      "text": "Creemee versus soft serve:",
+      "options": ["A sacred difference", "Same machine"],
+      "tags": ["food", "local", "spicy", "debate"],
+      "notes": "Expect a fight. Both sides are right, which is the point."
+    },
+    {
+      "id": "rk-042",
+      "text": "A friend hands you mushrooms they foraged:",
+      "options": ["Dinner", "Field guide first", "Absolutely not"],
+      "tags": ["food", "temperament"]
+    },
+    {
+      "id": "rk-043",
+      "text": "Maple in your latte:",
+      "options": ["Obviously", "Keep it on pancakes"],
+      "tags": ["food", "debate"]
+    },
+    {
+      "id": "rk-044",
+      "text": "Vermont state parks you've slept in:",
+      "options": ["None", "One or two", "Several", "Lost count"],
+      "tags": ["local", "temperament"]
+    },
+    {
+      "id": "rk-045",
+      "text": "Winter parking ban:",
+      "options": ["I've been towed", "Charmed life, so far"],
+      "tags": ["local", "seasonal"]
+    },
+    {
+      "id": "rk-046",
+      "text": "Green Up Day:",
+      "options": ["Bag in hand", "Support in spirit"],
+      "tags": ["local", "temperament"]
+    },
+    {
+      "id": "rk-047",
+      "text": "Town Meeting Day:",
+      "options": ["A regular", "Been once", "Not yet"],
+      "tags": ["local", "temperament"]
+    },
+    {
+      "id": "rk-048",
+      "text": "Getting into the lake:",
+      "options": ["Send it", "Inch by inch"],
+      "tags": ["local", "temperament"]
+    },
+    {
+      "id": "rk-049",
+      "text": "Winter coats you own:",
+      "options": ["One workhorse", "Two or three", "A full system", "It's a collection"],
+      "tags": ["seasonal", "temperament"]
+    },
+    {
+      "id": "rk-050",
+      "text": "Can a creemee be dinner?",
+      "options": ["It has been", "It's dessert"],
+      "tags": ["food", "local", "spicy"]
+    },
+    {
+      "id": "rk-051",
+      "text": "You're the one who:",
+      "options": ["Makes the plan", "Says yes at the last minute"],
+      "tags": ["temperament", "checkin"]
+    },
+    {
+      "id": "rk-052",
+      "text": "You are:",
+      "options": ["Up before six", "Alive after ten", "Both, somehow", "Neither"],
+      "tags": ["temperament", "checkin"]
+    },
+    {
+      "id": "rk-053",
+      "text": "Someone has news for you:",
+      "options": ["Just call me", "Text first, always"],
+      "tags": ["temperament", "debate", "checkin"]
+    },
+    {
+      "id": "rk-054",
+      "text": "Your birthday:",
+      "options": ["A big deal", "Please ignore it"],
+      "tags": ["temperament", "cozy"]
+    },
+    {
+      "id": "rk-055",
+      "text": "At a party, you worry more about:",
+      "options": ["Talking too much", "Saying too little"],
+      "tags": ["temperament"]
+    },
+    {
+      "id": "rk-056",
+      "text": "Which ruins you faster?",
+      "options": ["Too hot", "Too cold"],
+      "tags": ["temperament", "debate", "checkin"]
+    },
+    {
+      "id": "rk-057",
+      "text": "Leftovers are:",
+      "options": ["Better the next day", "A little sad"],
+      "tags": ["food", "debate"]
+    },
+    {
+      "id": "rk-058",
+      "text": "At a dinner party, hand me:",
+      "options": ["The pan", "The sponge"],
+      "tags": ["food", "temperament"]
+    },
+    {
+      "id": "rk-059",
+      "text": "Unread emails right now:",
+      "options": ["Zero", "Under fifty", "Hundreds", "Five digits"],
+      "tags": ["temperament"],
+      "notes": "Reveal the biggest bucket last."
+    },
+    {
+      "id": "rk-060",
+      "text": "Your alarm:",
+      "options": ["One, and up", "Snooze negotiations"],
+      "tags": ["temperament"]
+    },
+    {
+      "id": "rk-061",
+      "text": "Subtitles:",
+      "options": ["Always on", "Off"],
+      "tags": ["debate", "cozy", "checkin"]
+    },
+    {
+      "id": "rk-062",
+      "text": "At a new restaurant:",
+      "options": ["The weirdest thing", "The thing I know I love"],
+      "tags": ["food", "temperament"]
+    },
+    {
+      "id": "rk-063",
+      "text": "Karaoke tonight:",
+      "options": ["Hand me the mic", "Under no circumstances"],
+      "tags": ["temperament", "spicy"]
+    },
+    {
+      "id": "rk-064",
+      "text": "Crying at movies:",
+      "options": ["Every time", "Almost never"],
+      "tags": ["temperament", "cozy"]
+    },
+    {
+      "id": "rk-065",
+      "text": "Constitutionally, you are:",
+      "options": ["Ten minutes early", "Ten minutes late"],
+      "tags": ["temperament", "checkin"]
+    },
+    {
+      "id": "rk-066",
+      "text": "In the group chat, you're:",
+      "options": ["Instant replies", "Surfaces in three days"],
+      "tags": ["temperament"]
+    },
+    {
+      "id": "rk-067",
+      "text": "Browser tabs open right now:",
+      "options": ["Under five", "A dozen", "Dozens", "Don't look"],
+      "tags": ["temperament"]
+    },
+    {
+      "id": "rk-068",
+      "text": "Small talk:",
+      "options": ["Secretly love it", "Endure it"],
+      "tags": ["temperament"]
+    },
+    {
+      "id": "rk-069",
+      "text": "Camping means:",
+      "options": ["Tent on the ground", "A cabin with plumbing", "Hotels exist"],
+      "tags": ["temperament", "cozy"]
+    },
+    {
+      "id": "rk-070",
+      "text": "A surprise party, for you:",
+      "options": ["Delight", "Horror"],
+      "tags": ["temperament", "cozy"]
+    },
+    {
+      "id": "rk-071",
+      "text": "Spoilers:",
+      "options": ["Ruin everything", "Don't matter"],
+      "tags": ["debate", "temperament"]
+    },
+    {
+      "id": "rk-072",
+      "text": "Breakfast for dinner:",
+      "options": ["Genius", "Chaos"],
+      "tags": ["food", "cozy", "checkin"]
+    },
+    {
+      "id": "rk-073",
+      "text": "The last slice:",
+      "options": ["Claim it", "Halve it forever"],
+      "tags": ["food", "temperament"]
+    },
+    {
+      "id": "rk-074",
+      "text": "Deep-winter survival plan:",
+      "options": ["Outside anyway", "Full hibernation"],
+      "tags": ["seasonal", "cozy", "temperament"]
+    },
+    {
+      "id": "rk-075",
+      "text": "Houseplants:",
+      "options": ["None survive me", "A few", "A jungle", "They have names"],
+      "tags": ["cozy", "temperament"]
+    },
+    {
+      "id": "rk-076",
+      "text": "You'd rather:",
+      "options": ["Host", "Be hosted"],
+      "tags": ["temperament", "cozy"]
+    },
+    {
+      "id": "rk-077",
+      "text": "Which is worse at a party?",
+      "options": ["No music at all", "Too loud to talk"],
+      "tags": ["debate", "temperament"]
+    },
+    {
+      "id": "rk-078",
+      "text": "Lost in a new city:",
+      "options": ["Wander till it works", "Map immediately"],
+      "tags": ["temperament"]
+    },
+    {
+      "id": "rk-079",
+      "text": "Picking where to eat:",
+      "options": ["I know a place", "The forty-minute debate"],
+      "tags": ["food", "temperament"]
+    },
+    {
+      "id": "rk-080",
+      "text": "Which is worse: soaked socks or snow down your collar?",
+      "options": ["Soaked socks", "Snow down the collar"],
+      "tags": ["seasonal", "debate"]
     }
   ]
 }
