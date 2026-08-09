@@ -29,6 +29,8 @@ function prefillFromLink() {
   const code = params.get('join');
   if (code) {
     $('joinCode').value = code.toUpperCase().slice(0, 4);
+    // Arrived by QR — they're AT an event, so skip the host-your-own pitch.
+    $('hostPitch').classList.add('hidden');
     // Scrub the code so a refresh doesn't look like a fresh scan.
     params.delete('join');
     const qs = params.toString();
