@@ -25,7 +25,7 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startShim } from './party-shim.mjs';
-import { buildBallot, seedFrom, factById } from '../modes/tall-tales/logic.js';
+import { buildVoteConfig, seedFrom, factById } from '../modes/tall-tales/logic.js';
 
 let chromium;
 try {
@@ -211,26 +211,22 @@ try {
   // Build the ballot exactly as hostSetup's "open the vote" button does:
   // from the wrapped round's STORED results (approved lies only).
   const snap = await rpc('party_host_get', { p_event: eventId, p_host_key: hostKey });
-  const liesResults = snap.doneResults.filter((d) => d.mode === 'tall-tales').pop().results;
+  const liesEntry = snap.doneResults.filter((d) => d.mode === 'tall-tales').pop();
+  const liesResults = liesEntry.results;
   if (liesResults.lies.length === 2 && !JSON.stringify(liesResults).includes(LIES.Cleo)) {
     ok('stored lies round holds ONLY the two approved lies — the rejected one died unseen');
   } else fail('stored lies round holds only approved lies', JSON.stringify(liesResults.lies));
 
-  const ballot = buildBallot({
+  const { config: voteConfig, dropped } = buildVoteConfig({
     fact: FACT,
     lies: liesResults.lies,
+    liesRound: liesEntry.id,
     seed: seedFrom(`${FACT.id}|${liesResults.lies.map((l) => l.text).join('|')}`),
   });
+  if (!dropped.length) ok('the vote config fits the wire budget with nothing dropped');
+  else fail('the vote config fits the wire budget with nothing dropped', JSON.stringify(dropped));
   await rpc('party_open_round', {
-    p_event: eventId, p_host_key: hostKey, p_mode: 'tall-tales',
-    p_config: {
-      phase: 'vote',
-      fact: {
-        id: FACT.id, setup: FACT.setup, answer: FACT.answer,
-        source: { url: FACT.sourceUrl, title: FACT.sourceTitle, quote: FACT.sourceQuote },
-      },
-      ballot,
-    },
+    p_event: eventId, p_host_key: hostKey, p_mode: 'tall-tales', p_config: voteConfig,
   });
   ok('vote round opened with the seeded ballot');
 
@@ -277,6 +273,7 @@ try {
   ok(`host: narrated reveal is up — ${beatTotal} beats`);
 
   const beatTexts = [];
+  let silentNarration = 0;
   for (let s = 0; s < beatTotal; s++) {
     if (s > 0) {
       await host.click('#narratedNext');
@@ -288,7 +285,12 @@ try {
       await screen.waitForFunction(() => document.getElementById('mode-tall-tales-beat'), null, T);
     }
     beatTexts.push(await screen.evaluate(() => document.getElementById('stageInner').textContent));
+    await host.waitForFunction((step) => document.getElementById('narratedStep').textContent.startsWith(`beat ${step + 1} `), s, T);
+    const narratedAtBeat = await host.textContent('#narratedLines');
+    if (!narratedAtBeat.trim()) silentNarration += 1;
   }
+  if (silentNarration === 0) ok('host: every narrated beat has readable lines');
+  else fail('host: every narrated beat has readable lines', `${silentNarration} silent`);
   const findBeat = (needle) => beatTexts.find((t) => t.includes(needle));
 
   const lieBeat = findBeat('This one fooled 1');
@@ -311,10 +313,6 @@ try {
     ok('screen: the silver-tongue board closes the reveal');
   } else fail('screen: the silver-tongue board closes the reveal', boardBeat.slice(0, 120));
 
-  const narratedText = await host.textContent('#narratedLines');
-  if (narratedText.trim().length > 0) ok('host: narrated lines are readable aloud at every beat');
-  else fail('host: narrated lines are readable aloud');
-
   await host.click('#narratedNext'); // wrap
   await must(screen.waitForFunction(() => document.getElementById('stageInner').textContent.includes('Scan in'), null, T),
     'screen: back to the lobby after the wrap');
@@ -325,27 +323,41 @@ try {
   const setupPage = await newFace(`index.html${api}`, PHONE);
   const gate = await setupPage.evaluate(async () => {
     const mode = await import('/modes/tall-tales/mode.js');
-    const mount = document.createElement('div');
-    document.body.appendChild(mount);
-    const opened = [];
-    const ctx = { event: { doneResults: [] }, playedQuestionIds: [], openRound: async (cfg) => { opened.push(cfg); } };
-    mode.hostSetup(ctx, mount);
-    await new Promise((r) => setTimeout(r, 400)); // deck fetch
-    const before = mount.querySelectorAll('[id^="mode-tall-tales-pick-"]').length;
-    const hint = mount.textContent;
-    mount.querySelector('#mode-tall-tales-show-unreviewed').click();
-    const after = mount.querySelectorAll('[id^="mode-tall-tales-pick-"]').length;
-    const metaText = mount.querySelector('[id^="mode-tall-tales-pick-"] .qp-meta').textContent;
-    mount.querySelector('#mode-tall-tales-pick-tt-001').click();
+    const render = async () => {
+      const mount = document.createElement('div');
+      document.body.appendChild(mount);
+      const opened = [];
+      mode.hostSetup({ event: { doneResults: [] }, playedQuestionIds: [], openRound: async (c) => { opened.push(c); } }, mount);
+      await new Promise((r) => setTimeout(r, 400)); // deck fetch
+      return { mount, opened };
+    };
+    // A LIVE page (no ?demo=1): no facts AND no unreviewed toggle at all.
+    const live = await render();
+    const liveResult = {
+      picks: live.mount.querySelectorAll('[id^="mode-tall-tales-pick-"]').length,
+      toggle: !!live.mount.querySelector('#mode-tall-tales-show-unreviewed'),
+      hint: live.mount.textContent,
+    };
+    // A DEMO page: the toggle exists, brands everything UNVERIFIED.
+    history.replaceState(null, '', '?demo=1');
+    const demo = await render();
+    demo.mount.querySelector('#mode-tall-tales-show-unreviewed').click();
+    const after = demo.mount.querySelectorAll('[id^="mode-tall-tales-pick-"]').length;
+    const metaText = demo.mount.querySelector('[id^="mode-tall-tales-pick-"] .qp-meta').textContent;
+    demo.mount.querySelector('#mode-tall-tales-pick-tt-001').click();
     await new Promise((r) => setTimeout(r, 50));
-    return { before, hint, after, metaText, opened };
+    history.replaceState(null, '', location.pathname);
+    return { liveResult, after, metaText, opened: demo.opened };
   });
-  if (gate.before === 0 && gate.hint.includes('No facts have passed review yet')) {
-    ok('hostSetup: with 0 reviewed facts the default picker is EMPTY — the curation gate holds');
-  } else fail('hostSetup: default picker hides unreviewed facts', `showed ${gate.before}`);
+  if (gate.liveResult.picks === 0 && gate.liveResult.hint.includes('No facts have passed review yet')) {
+    ok('hostSetup (live): with 0 reviewed facts the default picker is EMPTY — the curation gate holds');
+  } else fail('hostSetup (live): default picker hides unreviewed facts', `showed ${gate.liveResult.picks}`);
+  if (gate.liveResult.toggle === false) {
+    ok('hostSetup (live): the unreviewed toggle does not even exist off ?demo=1');
+  } else fail('hostSetup (live): the unreviewed toggle is absent on live pages');
   if (gate.after === deck.facts.length && gate.metaText.includes('UNVERIFIED')) {
-    ok('hostSetup: the testing toggle shows all facts, each branded UNVERIFIED');
-  } else fail('hostSetup: testing toggle brands unreviewed facts', gate.metaText);
+    ok('hostSetup (demo): the testing toggle shows all facts, each branded UNVERIFIED');
+  } else fail('hostSetup (demo): testing toggle brands unreviewed facts', gate.metaText);
   const cfg = gate.opened[0];
   if (cfg?.phase === 'lies' && cfg.fact?.id === 'tt-001' && !('answer' in cfg.fact) && !('source' in cfg.fact)) {
     ok('hostSetup: a fact tap opens a lies round whose config carries NO answer and NO source');
@@ -368,8 +380,9 @@ try {
     return opened[0] ?? null;
   }, liesResults);
   if (voteOffer?.phase === 'vote' && voteOffer.ballot?.entries?.length === 3
-      && voteOffer.fact?.answer === FACT.answer && voteOffer.fact?.source?.url === FACT.sourceUrl) {
-    ok('hostSetup: after a lies round it offers the vote, ballot = approved lies + the truth');
+      && voteOffer.fact?.answer === FACT.answer && voteOffer.fact?.source?.url === FACT.sourceUrl
+      && voteOffer.liesRound === 'rnd-x') {
+    ok('hostSetup: after a lies round it offers the vote — ballot = approved lies + truth, lies round named');
   } else fail('hostSetup: vote offer builds the ballot', JSON.stringify(voteOffer)?.slice(0, 140));
 
   /* ---- pod play: one phone, a table of three ----------------------------- */
@@ -391,17 +404,29 @@ try {
     await pod.click('#mode-tall-tales-pod-lie-done');
   }
   ok('pod: three chairs wrote lies pass-and-play');
+  // Dealer's check: fact 1's dealer is Maple (seat 0) — only the dealer
+  // sees the lie list, and strikes one.
+  await pod.waitForSelector('#mode-tall-tales-pod-pass', T);
+  const dealerLine = await pod.textContent('#podRoot');
+  if (dealerLine.includes('Maple') && !dealerLine.includes('pod lie one')) {
+    ok('pod: the lie list waits behind the dealer interstitial — the table sees nothing yet');
+  } else fail('pod: lies stay private until the dealer looks', dealerLine.slice(0, 100));
+  await pod.click('#mode-tall-tales-pod-pass');
   await pod.waitForSelector('#mode-tall-tales-pod-ballot-go', T);
-  await pod.click('#mode-tall-tales-pod-strike-2'); // the table strikes one lie
+  await pod.click('#mode-tall-tales-pod-strike-2'); // the dealer strikes one lie
   await pod.click('#mode-tall-tales-pod-ballot-go');
-  for (let i = 0; i < 3; i++) {
+  // The vote: the dealer sits out (they saw the list), so Birch and Cedar vote.
+  for (let i = 0; i < 2; i++) {
     await pod.waitForSelector('#mode-tall-tales-pod-pass', T);
+    const voterLine = await pod.textContent('#podRoot');
+    if (voterLine.includes('Maple')) fail('pod: the dealer never gets a ballot', voterLine.slice(0, 80));
     await pod.click('#mode-tall-tales-pod-pass');
     await pod.waitForSelector('[id^="mode-tall-tales-pod-vote-"]', T);
     if (i === 0) {
+      // First voter is Birch — their own lie is podLies[1].
       const own = await pod.evaluate((t) =>
         [...document.querySelectorAll('[id^="mode-tall-tales-pod-vote-"]')]
-          .find((b) => b.textContent.includes(t))?.disabled, podLies[0]);
+          .find((b) => b.textContent.includes(t))?.disabled, podLies[1]);
       if (own === true) ok('pod: the phone refuses your own lie at the table too');
       else fail('pod: own-lie refusal at the table', String(own));
       const struck = await pod.evaluate(() => document.body.textContent.includes('pod lie three'));
@@ -412,6 +437,7 @@ try {
       [...document.querySelectorAll('[id^="mode-tall-tales-pod-vote-"]')].find((b) => !b.disabled).click();
     });
   }
+  ok('pod: the dealer sat the vote out; the other two chairs voted');
   let podSource = null;
   for (let s = 0; s < 20 && podSource == null; s++) {
     await pod.waitForSelector('#mode-tall-tales-pod-next', T);

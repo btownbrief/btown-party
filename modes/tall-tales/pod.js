@@ -7,10 +7,13 @@
 // math comes from logic.js; this file renders and dispatches only. The
 // clock seeds the shuffle at this edge (same license as demo.js/the shim).
 //
-// Moderation in pod play: there is no host, so the gate is the table
-// itself — before the ballot locks, the lie list is on the table's screen
-// with a strike button per lie, and anyone can strike a near-truth or a
-// dud. Nothing here ever reaches the room screen or other phones.
+// Moderation in pod play: there is no host, so each fact gets a DEALER —
+// rotating through the seats — who privately reviews the lie list and
+// strikes near-truths and doubles before anything reaches the table's
+// shared screen (approve-to-reveal, pod-sized). The dealer saw the lie
+// list, which would let them spot the truth by elimination, so the dealer
+// sits out that fact's vote; their own lie still plays and still scores.
+// Nothing here ever reaches the room screen or other phones.
 //
 // The curation gate still holds: reviewed facts only, unless ?unreviewed=1
 // (couch testing — the page banners it loudly).
@@ -153,45 +156,69 @@ function collectLies(fact, lies, at) {
   root.appendChild(go);
 }
 
-/** The pod's moderation gate: the lie list, on the table, strikeable. */
+/** This fact's dealer: rotates through the seats, fact by fact. */
+const dealerFor = (factIndex) => state.players[factIndex % state.players.length];
+
+/**
+ * The pod's moderation gate: the DEALER — and only the dealer — reviews
+ * the lie list before anything hits the table's shared screen. If the
+ * whole table saw this list, the vote would be broken anyway: the one
+ * ballot entry nobody had seen would have to be the truth.
+ */
 function tableCheck(fact, lies) {
+  const dealer = dealerFor(state.factIndex);
   clear();
-  root.appendChild(el('p', 'collect-ask', 'Table check'));
-  root.appendChild(el('h2', 'collect-question', fact.setup));
-  root.appendChild(el('p', 'dim small',
-    'Lay the phone flat. Strike anything that IS the truth, or a double — the table is the moderator.'));
-  const struck = new Set();
-  lies.forEach((l, i) => {
-    const row = el('div', 'pod-row');
-    const text = el('div', 'collect-opt', l.text);
-    const strike = el('button', 'chip-btn', '✕');
-    strike.id = `mode-tall-tales-pod-strike-${i}`;
-    strike.setAttribute('aria-label', `strike lie ${i + 1}`);
-    strike.addEventListener('click', () => {
-      if (struck.has(i)) struck.delete(i); else struck.add(i);
-      text.classList.toggle('pod-strike', struck.has(i));
-    });
-    row.append(text, strike);
-    root.appendChild(row);
-  });
-  const go = el('button', 'big-btn', 'Ballot is set — start the vote');
-  go.id = 'mode-tall-tales-pod-ballot-go';
+  root.appendChild(el('p', 'collect-ask', 'Dealer’s check'));
+  root.appendChild(el('h1', null, `Pass the phone to ${dealer}`));
+  root.appendChild(el('p', 'dim',
+    `Only ${dealer} looks: strike anything that IS the truth, or a double. Dealing means sitting out this vote — your lie still plays.`));
+  const go = el('button', 'big-btn', `I'm ${dealer} — show me the lies`);
+  go.id = 'mode-tall-tales-pod-pass';
   go.addEventListener('click', () => {
-    const kept = lies.filter((_, i) => !struck.has(i));
-    const ballot = buildBallot({
-      fact,
-      lies: kept,
-      seed: seedFrom(`${fact.id}|${kept.map((l) => l.text).join('|')}`),
+    clear();
+    root.appendChild(el('p', 'collect-ask', `${dealer} — the dealer’s check`));
+    root.appendChild(el('h2', 'collect-question', fact.setup));
+    root.appendChild(el('p', 'dim small',
+      'Strike anything that IS the truth, or a double. Then lay the phone flat.'));
+    const struck = new Set();
+    lies.forEach((l, i) => {
+      const row = el('div', 'pod-row');
+      const text = el('div', 'collect-opt', l.text);
+      const strike = el('button', 'chip-btn', '✕');
+      strike.id = `mode-tall-tales-pod-strike-${i}`;
+      strike.setAttribute('aria-label', `strike lie ${i + 1}`);
+      strike.addEventListener('click', () => {
+        if (struck.has(i)) struck.delete(i); else struck.add(i);
+        text.classList.toggle('pod-strike', struck.has(i));
+      });
+      row.append(text, strike);
+      root.appendChild(row);
     });
-    collectVotes(fact, ballot, kept, [], 0);
+    const done = el('button', 'big-btn', 'Ballot is set — start the vote');
+    done.id = 'mode-tall-tales-pod-ballot-go';
+    done.addEventListener('click', () => {
+      const kept = lies.filter((_, i) => !struck.has(i));
+      const ballot = buildBallot({
+        fact,
+        lies: kept,
+        seed: seedFrom(`${fact.id}|${kept.map((l) => l.text).join('|')}`),
+      });
+      collectVotes(fact, ballot, kept, [], 0);
+    });
+    root.appendChild(done);
   });
   root.appendChild(go);
 }
 
-/** Pass-and-play voting: own lie is disabled — you cannot vote for it. */
+/** Pass-and-play voting: own lie is disabled — you cannot vote for it —
+ *  and the dealer sits this one out (they saw the whole lie list). */
 function collectVotes(fact, ballot, lies, votes, at) {
   if (at >= state.players.length) { reveal(fact, ballot, votes); return; }
   const name = state.players[at];
+  if (name === dealerFor(state.factIndex)) {
+    collectVotes(fact, ballot, lies, votes, at + 1);
+    return;
+  }
   clear();
   root.appendChild(el('h1', null, `Pass the phone to ${name}`));
   const go = el('button', 'big-btn', `I'm ${name} — show the ballot`);

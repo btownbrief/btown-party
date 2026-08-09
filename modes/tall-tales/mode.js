@@ -11,7 +11,7 @@
 // a live room, and every unreviewed fact is branded UNVERIFIED.
 
 import {
-  SLUG, LIE_MAX_LEN, normalizeText, buildBallot, seedFrom,
+  SLUG, LIE_MAX_LEN, normalizeText, buildVoteConfig, seedFrom,
   computeResults as compute, scoreboard, beatCount as beats,
   narratedBeat, pickableFacts, factById,
 } from './logic.js';
@@ -54,10 +54,10 @@ export function hostSetup(ctx, mount) {
 function renderHostSetup(ctx, wrap, deck) {
   wrap.innerHTML = '';
   const done = myDone(ctx.event);
-  const last = done[done.length - 1]?.results;
+  const last = done[done.length - 1];
 
   // A wrapped lies round with no vote yet → the vote is the next move.
-  if (last?.phase === 'lies') {
+  if (last?.results?.phase === 'lies') {
     renderVoteOffer(ctx, wrap, deck, last);
     wrap.appendChild(el('p', 'host-hint dim', '…or shelve that fact and start a fresh one:'));
   }
@@ -72,7 +72,8 @@ function renderHostSetup(ctx, wrap, deck) {
   wrap.appendChild(pod);
 }
 
-function renderVoteOffer(ctx, wrap, deck, liesResults) {
+function renderVoteOffer(ctx, wrap, deck, liesEntry) {
+  const liesResults = liesEntry.results;
   const fact = factById(deck, liesResults.fact.id);
   wrap.appendChild(el('p', 'host-hint',
     `The lies are in for: “${liesResults.fact.setup}”`));
@@ -85,25 +86,18 @@ function renderVoteOffer(ctx, wrap, deck, liesResults) {
     `Open the vote — ${n} ${n === 1 ? 'lie' : 'lies'} + the truth`);
   btn.id = `mode-${slug}-open-vote`;
   btn.addEventListener('click', async () => {
-    const ballot = buildBallot({
+    // buildVoteConfig guarantees the config fits the backend's byte budget;
+    // in a packed room the longest lies are dropped rather than the vote
+    // dead-ending after the lies round has already wrapped.
+    const { config, dropped } = buildVoteConfig({
       fact,
       lies: liesResults.lies,
+      liesRound: liesEntry.id,
       seed: seedFrom(`${fact.id}|${liesResults.lies.map((l) => l.text).join('|')}`),
     });
-    const config = {
-      phase: 'vote',
-      fact: {
-        id: fact.id,
-        setup: fact.setup,
-        answer: fact.answer,
-        source: { url: fact.sourceUrl, title: fact.sourceTitle, quote: fact.sourceQuote },
-      },
-      ballot,
-    };
-    if (JSON.stringify(config).length > 8000) {
-      btn.insertAdjacentElement('afterend',
-        el('p', 'error-line', 'Too many lies for one ballot — scrap this fact or approve fewer next time.'));
-      return;
+    if (dropped.length) {
+      btn.insertAdjacentElement('afterend', el('p', 'error-line',
+        `The ballot was over the wire limit — the longest ${dropped.length === 1 ? 'lie' : `${dropped.length} lies`} (${dropped.map((d) => d.name).join(', ')}) had to sit out.`));
     }
     btn.disabled = true;
     try {
@@ -151,16 +145,21 @@ function renderFactPicker(ctx, wrap, deck, done) {
   };
   paint();
 
-  const toggleWrap = el('label', 'host-hint small dim');
-  const toggle = document.createElement('input');
-  toggle.type = 'checkbox';
-  toggle.id = `mode-${slug}-show-unreviewed`;
-  toggle.addEventListener('change', () => {
-    showUnreviewed = toggle.checked;
-    paint();
-  });
-  toggleWrap.append(toggle, ' Show unreviewed facts — couch testing only, never for a live room.');
-  wrap.appendChild(toggleWrap);
+  // The unreviewed toggle exists ONLY on demo pages (?demo=1 couch
+  // rehearsal). A live host console never offers a way to put an
+  // unverified fact in front of a room.
+  if (new URLSearchParams(globalThis.location?.search ?? '').get('demo') === '1') {
+    const toggleWrap = el('label', 'host-hint small dim');
+    const toggle = document.createElement('input');
+    toggle.type = 'checkbox';
+    toggle.id = `mode-${slug}-show-unreviewed`;
+    toggle.addEventListener('change', () => {
+      showUnreviewed = toggle.checked;
+      paint();
+    });
+    toggleWrap.append(toggle, ' Show unreviewed facts — couch testing only, never for a live room.');
+    wrap.appendChild(toggleWrap);
+  }
 }
 
 /* ------------------------------------------------------------ moderation */
@@ -179,14 +178,17 @@ export function describeSubmission(payload, config) {
 
 /* ----------------------------------------------------------- phone input */
 
-// The phone remembers its own lie per fact so the vote round can refuse a
-// self-vote client-side too (logic.js discards them again at scoring).
-const ownLieKey = (factId) => `btown-tt-own-lie-${factId}`;
-const stash = (factId, text) => {
-  try { sessionStorage.setItem(ownLieKey(factId), normalizeText(text)); } catch { /* private mode */ }
+// The phone remembers its own lie per LIES ROUND (not per fact — a replayed
+// fact must never let a stale lie disable a fresh legal vote) so the vote
+// round can refuse a self-vote client-side too (logic.js discards them
+// again at scoring). The vote config carries the lies round's id.
+const ownLieKey = (roundId) => `btown-tt-own-lie-${roundId}`;
+const stash = (roundId, text) => {
+  try { sessionStorage.setItem(ownLieKey(roundId), normalizeText(text)); } catch { /* private mode */ }
 };
-const stashed = (factId) => {
-  try { return sessionStorage.getItem(ownLieKey(factId)) ?? ''; } catch { return ''; }
+const stashed = (roundId) => {
+  if (!roundId) return '';
+  try { return sessionStorage.getItem(ownLieKey(roundId)) ?? ''; } catch { return ''; }
 };
 
 export function phoneCollect(ctx, mount) {
@@ -224,7 +226,7 @@ function renderLieInput(ctx, wrap, config) {
     send.disabled = true;
     send.textContent = 'Sending…';
     try {
-      stash(config.fact.id, text);
+      stash(ctx.round.id, text);
       await ctx.submit({ kind: 'lie', text });
     } catch {
       send.disabled = false;
@@ -238,7 +240,7 @@ function renderVote(ctx, wrap, config) {
   wrap.appendChild(el('p', 'collect-ask', 'One of these is TRUE'));
   wrap.appendChild(el('h2', 'collect-question', config.fact?.setup ?? ''));
 
-  const own = stashed(config.fact?.id);
+  const own = stashed(config.liesRound);
   let picked = null;
   const buttons = config.ballot.entries.map((entry) => {
     const b = el('button', 'collect-opt', entry.text);

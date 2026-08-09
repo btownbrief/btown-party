@@ -177,6 +177,7 @@ export function computeVoteResults({ config, approved }) {
     throw new Error('bad_config');
   }
 
+  const matcherSet = new Set(ballot.truthMatchers ?? []);
   const votesByKey = new Map(ballot.entries.map((e) => [e.key, []]));
   for (const s of approved ?? []) {
     const v = cleanVote(s.payload, ballot);
@@ -184,6 +185,10 @@ export function computeVoteResults({ config, approved }) {
     if (!v || !name) continue; // malformed votes sit the round out
     const entry = ballot.entries.find((e) => e.key === v.key);
     if (entry.authors.includes(name)) continue; // own-lie vote: discarded
+    // A truth-WRITER voting for the truth is voting for their own entry in
+    // spirit: discard it too, or they would collect the truth award twice
+    // (once as finder, once as matcher).
+    if (entry.truth && matcherSet.has(name)) continue;
     votesByKey.get(v.key).push(name);
   }
 
@@ -268,6 +273,55 @@ export function voteBeatPlan(entries) {
     { kind: 'source' },
     { kind: 'board' },
   ];
+}
+
+/* ----------------------------------------------------- vote-round config */
+
+/** UTF-8 byte size of a JSON value — the backend's config limit counts
+ *  bytes, and JSON.stringify().length counts UTF-16 code units, which
+ *  undercounts every emoji and accent a room full of phones will type. */
+export function configBytes(value) {
+  return new TextEncoder().encode(JSON.stringify(value)).length;
+}
+
+export const MAX_CONFIG_BYTES = 7500; // headroom under the backend's 8192
+
+/**
+ * The whole vote-round config, built pure and guaranteed to fit the
+ * backend's byte budget: if a packed room's ballot would blow the limit,
+ * the LONGEST lies are dropped (later submissions first on a length tie)
+ * until it fits — the round stays playable and the host is told exactly
+ * whose lies were left off, instead of the vote dead-ending after the
+ * lies round has already been moderated and wrapped.
+ * Returns { config, dropped } — dropped is [{ name, text }].
+ */
+export function buildVoteConfig({ fact, lies, liesRound, seed, maxBytes = MAX_CONFIG_BYTES }) {
+  const kept = [...(lies ?? [])];
+  const dropped = [];
+  for (;;) {
+    const ballot = buildBallot({ fact, lies: kept, seed });
+    const config = {
+      phase: 'vote',
+      fact: {
+        id: fact.id,
+        setup: fact.setup,
+        answer: fact.answer,
+        source: fact.source
+          ? { ...fact.source }
+          : { url: fact.sourceUrl, title: fact.sourceTitle, quote: fact.sourceQuote },
+      },
+      ...(liesRound ? { liesRound } : {}),
+      ballot,
+    };
+    if (configBytes(config) <= maxBytes || !kept.length) {
+      return { config, dropped };
+    }
+    let worst = 0;
+    for (let i = 1; i < kept.length; i++) {
+      if (String(kept[i]?.text ?? '').length >= String(kept[worst]?.text ?? '').length) worst = i;
+    }
+    dropped.push(kept.splice(worst, 1)[0]);
+  }
 }
 
 /** Shell → mode dispatch: one entry point for both round shapes. */
