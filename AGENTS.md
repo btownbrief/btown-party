@@ -123,9 +123,11 @@ minute, and get told to put the phone away. Late arrivals join any time
 
 ## Running a pulse (about 5 minutes, whenever the room needs one)
 
-1. On your host console, under **Round**, tap tonight's question you want
-   to play (it shows how many people answered it at check-in — pick a fat
-   one).
+1. On your host console, under **Round**, pick tonight's game from the
+   tabs at the top (they only appear once more than one game is
+   installed — your last pick is remembered). For The Room Knows, then
+   tap the question you want to play (it shows how many people answered
+   it at check-in — pick a fat one).
 2. Every phone in the room wakes up and asks "What did THIS room say?" —
    they pick an option and slide a percent. You'll see entries stack up
    with ✓ ⏸ ✕ buttons. Give it 60–90 seconds.

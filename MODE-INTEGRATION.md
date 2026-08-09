@@ -35,6 +35,11 @@ Nothing else in the shell changes. Do not touch the shell files
 (js/attendee.js, js/host.js, js/screen.js, js/party-core.js,
 js/party-client.js), the SQL, or another mode's directory.
 
+Once more than one mode is registered, the host console automatically
+shows a mode picker above round setup (tabs built from each mode's
+`title` + `tagline`; the last pick is remembered on the host's phone).
+Modes never render their own pickers.
+
 ## What a mode module must export
 
 ```js
@@ -52,6 +57,13 @@ export function hostSetup(ctx, mount) {}
 // HOST: one short human line per submission for the shell's moderation
 // list — the host reads this to approve/reject. Never return raw JSON.
 export function describeSubmission(payload, config) {}
+
+// OPTIONAL — HOST: visual payloads (doodles etc.). Return an HTMLElement
+// rendering the submission so the host can SEE what they're approving;
+// the shell shows it in the moderation row instead of describeSubmission's
+// text (which stays required as the fallback). Moderation-queue only —
+// this never reaches the screen or other phones.
+export function renderSubmission(payload, config) {}
 
 // PHONE: the collect-phase input. TEN SECONDS OR LESS of interaction,
 // then the phone is done (the shell shows "eyes up" after ctx.submit

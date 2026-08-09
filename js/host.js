@@ -20,6 +20,7 @@ let poller = null;
 let roundSig = '';        // re-render the round card only when this changes
 let narratedSig = '';
 let armed = {};           // two-tap confirmations, keyed by action
+let pickedModeSlug = localStorage.getItem('bp-picked-mode');
 
 /* -------------------------------------------------------------- create */
 
@@ -143,18 +144,44 @@ function renderRound() {
   const r = snap.round;
   const sig = r
     ? `${r.id}:${r.status}:${r.submissions.map((s) => s.id + s.status).join(',')}`
-    : `idle:${snap.roundsPlayed}:${(snap.checkinTallies ?? []).map((t) => t?.total).join(',')}`;
+    : `idle:${pickedModeSlug}:${snap.roundsPlayed}:${(snap.checkinTallies ?? []).map((t) => t?.total).join(',')}`;
   if (sig === roundSig) return;
   roundSig = sig;
 
   if (!r) {
     show('roundLive', false);
     show('roundSetupMount', true);
+    if (!MODES[pickedModeSlug]) pickedModeSlug = Object.keys(MODES)[0];
+    const mode = MODES[pickedModeSlug];
+
+    const wrap = $('roundSetupMount');
+    wrap.innerHTML = '';
+    if (Object.keys(MODES).length > 1) {
+      const tabs = document.createElement('div');
+      tabs.className = 'mode-tabs';
+      for (const m of Object.values(MODES)) {
+        const b = document.createElement('button');
+        b.className = 'mode-tab' + (m.slug === mode.slug ? ' active' : '');
+        b.id = `mode-tab-${m.slug}`;
+        b.innerHTML = `<span class="mode-tab-title"></span><span class="mode-tab-tag"></span>`;
+        b.querySelector('.mode-tab-title').textContent = m.title;
+        b.querySelector('.mode-tab-tag').textContent = m.tagline;
+        b.addEventListener('click', () => {
+          pickedModeSlug = m.slug;
+          localStorage.setItem('bp-picked-mode', m.slug);
+          roundSig = '';
+          renderRound();
+        });
+        tabs.appendChild(b);
+      }
+      wrap.appendChild(tabs);
+    }
+    const mount = document.createElement('div');
+    wrap.appendChild(mount);
+
     const playedQuestionIds = snap.doneResults
       .map((d) => d.results?.question?.id)
       .filter(Boolean);
-    // Only one mode tonight; a mode picker appears when a sibling lands.
-    const mode = Object.values(MODES)[0];
     mode.hostSetup({
       event: snap,
       playedQuestionIds,
@@ -165,7 +192,7 @@ function renderRound() {
         });
         poller.poke();
       },
-    }, $('roundSetupMount'));
+    }, mount);
     return;
   }
 
@@ -189,7 +216,15 @@ function renderRound() {
     who.textContent = s.name;
     const what = document.createElement('span');
     what.className = 'mod-what';
-    what.textContent = mode?.describeSubmission?.(s.payload, r.config) ?? JSON.stringify(s.payload);
+    // Visual payloads (doodles etc.): a mode may render the submission so the
+    // host can SEE what they're approving — text fallback either way.
+    let visual = null;
+    try { visual = mode?.renderSubmission?.(s.payload, r.config) ?? null; } catch { visual = null; }
+    if (visual instanceof HTMLElement) {
+      what.appendChild(visual);
+    } else {
+      what.textContent = mode?.describeSubmission?.(s.payload, r.config) ?? JSON.stringify(s.payload);
+    }
     const btns = document.createElement('span');
     btns.className = 'mod-btns';
     for (const [cls, glyph, status, label] of [
