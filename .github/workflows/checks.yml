@@ -1,0 +1,33 @@
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TZ: UTC
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: git ls-files -z '*.js' '*.mjs' | xargs -0 -r -n 1 node --check
+      - name: Run offline regression tests
+        run: |
+          set -euo pipefail
+          for test in scripts/test-*.mjs; do
+            node "$test"
+          done
